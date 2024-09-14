@@ -14,3 +14,68 @@ datasource db {
 }
 
 
+
+
+model Account{
+
+  accountId Int @id @default(autoincrement())
+  userId String @unique 
+  password String
+  userName String @unique
+  userCash Int
+  winCount Int @default(0)
+  loseCount Int @default(0)
+  drowCount Int @default(0)
+  gameCount Int @default(0)
+  rankPoint Int @default(0)
+
+
+characterList CharacterList? //Account1:1CharacterList
+  @@map("Account")
+}
+
+model MyTeam{
+  myTeamId Int @id @default(autoincrement())
+  characterId Int
+  accountId Int
+  teamFormation Json
+
+  @@map("MyTeam")
+}
+
+model Character{
+characterId Int @id @default(autoincrement())
+speed Int
+goalDetermination Int 
+shootingPower Int
+defense Int
+stemina Int
+characterName String @unique
+characterListId Int
+
+characterList CharacterList @relation(fields: [characterListId],references: [characterListId])
+@@map("Character")
+}
+
+model CharacterList{
+characterListId Int @id @default(autoincrement())
+accountId Int @unique
+
+
+
+character Character[]
+account Account @relation(fields:[accountId],references:[accountId],onDelete:Cascade)
+@@map("CharacterList")
+}
+
+model CharacterJoin{
+characterJoinId Int @id @default(autoincrement())
+//CharacterList.character = 아이돌
+//MyTeam.teamFormation = 소속사
+
+//characterList 테이블의 character를 myteam테이블의 teamFormation 에 3명씩 넣어서 하나의 myteam을 만드려고 하였으나
+//N:M관계를 characterJoin을 중간모델로 사용하여 연결하려 하였으나 characterListId가 연결되는 불상사가 발생했다.
+//그렇다면 characterList의 character를 연결하는 방법은? 
+//특정 테이블안에 컬럼과 다른특정 테이블의 컬럼끼리 연결이 가능한가? ****************
+//당연히 가능하겠죠?
+}
