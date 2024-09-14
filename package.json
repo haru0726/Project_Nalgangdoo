@@ -1,11 +1,11 @@
 {
   "name": "project_nalgangdoo",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "app.js",
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "nodemon:app.js"
+    "dev": "node app.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
