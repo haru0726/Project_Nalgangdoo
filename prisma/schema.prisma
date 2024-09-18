@@ -12,13 +12,14 @@ datasource db {
 // 계정
 model Account {
   accountId Int @id @default(autoincrement())
-  userName String @unique // 아이디 겸 닉네임
+  userId String @unique // 유저 아이디
+  userName String @unique // 닉네임
   password String
   characters CharacterList[] // 중간 테이블로 N:M 관계 맺기
   userCash Int @default(5000) // 캐쉬
-  winCount Int
-  loseCount Int
-  drowCount Int
+  winCount Int @default(0)
+  loseCount Int @default(0)
+  drowCount Int @default(0)
   rankPoint Int @default(100) // 랭킹 포인트. 플레이어 간의 점수 차가 클 수록 증감되는 값이 크면 좋겠다.
   createAt DateTime @default(now())
 
