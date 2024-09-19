@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,69 +7,50 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// 계정과 캐릭터 N:M 관계가 필요하다
 
-
-
-model Account{
-
+// 계정
+model Account {
   accountId Int @id @default(autoincrement())
-  userId String @unique 
+  userId String @unique // 유저 아이디
+  userName String @unique // 닉네임
   password String
-  userName String @unique
-  userCash Int
+  characters CharacterList[] // 중간 테이블로 N:M 관계 맺기
+  userCash Int @default(5000) // 캐쉬
   winCount Int @default(0)
   loseCount Int @default(0)
   drowCount Int @default(0)
-  gameCount Int @default(0)
-  rankPoint Int @default(0)
+  rankPoint Int @default(100) // 랭킹 포인트. 플레이어 간의 점수 차가 클 수록 증감되는 값이 크면 좋겠다.
+  createAt DateTime @default(now())
 
-
-characterList CharacterList? //Account1:1CharacterList
   @@map("Account")
 }
 
-model MyTeam{
-  myTeamId Int @id @default(autoincrement())
-  characterId Int
-  accountId Int
-  teamFormation Json
+// 게임 상에 존재하는 모든 캐릭터
+model Character {
+  characterId Int @id @default(autoincrement())
+  name String @unique // 캐릭터 이름, 중복 불가
+  speed Int // 각종 스탯...
+  goalDetermination Int
+  shootPower Int
+  defense Int
+  stamina Int
+  accountCharacters CharacterList[] // 중간 테이블로 N:M 관계 맺기
+  // 의문점: 스탯을 JSON으로 관리하는 게 좋은지, 컬럼으로 관리하는 게 좋은지
 
-  @@map("MyTeam")
+  @@map("Character")
 }
 
-model Character{
-characterId Int @id @default(autoincrement())
-speed Int
-goalDetermination Int 
-shootingPower Int
-defense Int
-stemina Int
-characterName String @unique
-characterListId Int
-
-characterList CharacterList @relation(fields: [characterListId],references: [characterListId])
-@@map("Character")
+// 계정이 보유한 캐릭터
+// Account : Character = N:M 관계 설정을 위한 중간 테이블
+model CharacterList {
+  characterListId Int @id @default(autoincrement())
+  accountId Int // 연결된 계정
+  characterId Int // 연결된 캐릭터
+  quantity Int @default(1) // 캐릭터 수량
+  isFormation Boolean @default(false) // 편성 여부
+  
+  accountRelation Account @relation(fields: [accountId], references: [accountId])
+  characterRelation Character @relation(fields: [characterId], references: [characterId])
 }
 
-model CharacterList{
-characterListId Int @id @default(autoincrement())
-accountId Int @unique
-
-
-
-character Character[]
-account Account @relation(fields:[accountId],references:[accountId],onDelete:Cascade)
-@@map("CharacterList")
-}
-
-model CharacterJoin{
-characterJoinId Int @id @default(autoincrement())
-//CharacterList.character = 아이돌
-//MyTeam.teamFormation = 소속사
-
-//characterList 테이블의 character를 myteam테이블의 teamFormation 에 3명씩 넣어서 하나의 myteam을 만드려고 하였으나
-//N:M관계를 characterJoin을 중간모델로 사용하여 연결하려 하였으나 characterListId가 연결되는 불상사가 발생했다.
-//그렇다면 characterList의 character를 연결하는 방법은? 
-//특정 테이블안에 컬럼과 다른특정 테이블의 컬럼끼리 연결이 가능한가? ****************
-//당연히 가능하겠죠?
-}
