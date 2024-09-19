@@ -52,5 +52,12 @@ model CharacterList {
   
   accountRelation Account @relation(fields: [accountId], references: [accountId])
   characterRelation Character @relation(fields: [characterId], references: [characterId])
+  teams Team[] @relation("TeamMembers") // 민석 팀과의 관계 추가
 }
 
+// 민석 팀 구성 추가
+model Team { 
+    teamId Int @id @default(autoincrement())
+    name String
+    members CharacterList[] @relation("TeamMembers") // 관계 이름 추가
+}
