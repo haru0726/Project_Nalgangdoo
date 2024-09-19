@@ -133,6 +133,7 @@ router.patch("/cash", authMiddleware, async (req, res, next) => {
       return res.status(404).json({ message: "존재하지 않는 계정입니다." });
     }
 
+    // 트랜잭션 시작
     // 요청된 캐쉬 값 더하기
     const updatedCash = account.userCash + userCash;
 
@@ -145,6 +146,7 @@ router.patch("/cash", authMiddleware, async (req, res, next) => {
         userCash: updatedCash,
       },
     });
+    // 트랜잭션 종료
 
     return res.status(200).json({
       message: "캐쉬 구매 완료~!",
@@ -158,7 +160,7 @@ router.patch("/cash", authMiddleware, async (req, res, next) => {
 /**
  * @desc 선수 뽑기 API
  * @author 준호
- * @version 1.0 트랜잭션 업데이트 필요, 3-1부터 작성 필요
+ * @version 1.0 트랜잭션 업데이트 필요
  *
  * 1. 미들웨어 거치고
  * 2. 가차 횟수를 요청받는다 --> N
@@ -185,6 +187,11 @@ router.post("/character-draw", authMiddleware, async (req, res, next) => {
       return res.status(404).json({ message: "존재하지 않는 계정입니다." });
     }
 
+    // request 캐쉬 유효성 검사
+    if (drawCount <= 0) {
+      return res.status(400).json({ message: "올바른 값을 입력하세요." });
+    }
+
     // 유저 캐쉬 확인
     if (account.userCash < drawCount * 500) {
       return res.status(402).json({ message: "캐시가 부족합니다." });
@@ -203,6 +210,49 @@ router.post("/character-draw", authMiddleware, async (req, res, next) => {
         .status(404)
         .json({ message: "현재 캐릭터가 존재하지 않습니다." });
     }
+
+    // 랜덤한 캐릭터 drawCount만큼 뽑기
+    const drawnCharacters = [];
+    for (let i = 0; i < drawCount; i++) {
+      const randomIdx = Math.floor(Math.random() * allCharacters.length);
+      drawnCharacters.push(allCharacters[randomIdx]);
+    }
+
+    // 뽑은 캐릭터 순회하며 기존 CharacterList에 있는지 검사
+    for (const character of drawnCharacters) {
+      const existingCharacter = await prisma.characterList.findFirst({
+        where: {
+          accountId: account.accountId,
+          characterId: character.characterId,
+        },
+      });
+
+      if (existingCharacter) {
+        // 캐릭터가 이미 있으면 수량 증가
+        await prisma.characterList.update({
+          where: {
+            characterListId: existingCharacter.characterListId,
+          },
+          data: {
+            quantity: existingCharacter.quantity + 1,
+          },
+        });
+      } else {
+        // 캐릭터가 없으면 새로 추가
+        await prisma.characterList.create({
+          data: {
+            accountId: account.accountId,
+            characterId: character.characterId,
+            quantity: 1,
+          },
+        });
+      }
+    }
+
+    return res.status(200).json({
+      message: "새로운 선수들이 감독님을 섬깁니다.",
+      "뽑은 선수": drawnCharacters,
+    });
   } catch (err) {
     console.log(err);
   }
