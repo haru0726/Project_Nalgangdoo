@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { prisma } from "../utils/prisma/index.js";
 
+const env = process.env;
 const router = express.Router();
 
 /**
@@ -52,7 +53,8 @@ router.post("/sign-up", async (req, res, next) => {
 
     return res.status(201).json({ message: "회원가입이 완료되었습니다." });
   } catch (err) {
-    console.log(err);
+    console.log("회원가입 에러:", err);
+    return res.status(500).json({ message: "서버 오류가 발생했습니다." });
   }
 });
 
@@ -80,11 +82,11 @@ router.post("/sign-in", async (req, res, next) => {
     }
 
     // 토큰 발급
-    const token = jwt.sign({ userId: user.userId }, "nal-gang-doo", {
+    const token = jwt.sign({ userId: user.userId }, env.JWT_TOKEN_SECRETKEY, {
       expiresIn: "30m",
     });
-    res.setHeader("Authorization", `nal-gang-doo ${token}`);
-
+    res.setHeader("Authorization", `Bearer ${token}`);
+    console.log(token);
     return res.status(200).json({ message: "로그인이 성공했습니다." });
   } catch (err) {
     console.log(err);
