@@ -49,7 +49,8 @@ model CharacterList {
   characterId Int // 연결된 캐릭터
   quantity Int @default(1) // 캐릭터 수량
   isFormation Boolean @default(false) // 편성 여부
-
+  
   accountRelation Account @relation(fields: [accountId], references: [accountId])
   characterRelation Character @relation(fields: [characterId], references: [characterId])
 }
+
