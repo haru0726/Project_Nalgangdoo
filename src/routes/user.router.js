@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { prisma } from "../utils/prisma/index.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
 
+const env = process.env;
 const router = express.Router();
 
 /**
@@ -53,7 +54,8 @@ router.post("/sign-up", async (req, res, next) => {
 
     return res.status(201).json({ message: "회원가입이 완료되었습니다." });
   } catch (err) {
-    console.log(err);
+    console.log("회원가입 에러:", err);
+    return res.status(500).json({ message: "서버 오류가 발생했습니다." });
   }
 });
 
