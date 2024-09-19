@@ -1,31 +1,31 @@
 import jwt from "jsonwebtoken";
-import { prisma } from "../utils/prisma/index.js";
 
-const env = process.env;
-
-export default async (req, res, next) => {
+const authMiddleware = (req, res, next) => {
   try {
-    const authHeader = res.headers["authorization"];
+    // 헤더로 요청한 Authorization 값
+    const authHeader = req.headers["authorization"];
 
-    if (!authHeader) {
-      throw new Error("토큰이 존재하지 않습니다.");
-    }
-    const [tokenType, token] = authHeader.split(" ");
-    if (tokenType !== "Bearer") {
-      throw new Error("토큰 타입이 잘못되었습니다.");
-    }
-    const decodedToken = jwt.verify(token, env.JWT_TOKEN_SECRETKEY);
-    const userId = decodedToken.userId;
-    const user = await prisma.account.findUnique({
-      where: { userId: userId },
+    // 토큰만 추출
+    const token = authHeader && authHeader.split(" ")[1];
+
+    // 토큰이 없으면 인증 실패
+    if (token == null)
+      return res.status(401).json({ message: "토큰이 없습니다." });
+
+    // 토큰이 있으면 검증
+    jwt.verify(token, process.env.JWT_KEY, (err, user) => {
+      if (err) {
+        return res.status(403).json({ message: "토큰이 유효하지 않습니다." });
+      }
+
+      // 유저 정보 저장
+      req.user = user;
+
+      next();
     });
-    if (!user) {
-      throw new Error("해당 토큰은 사용할 수 없습니다.");
-    }
-    req.user = user;
-    next();
   } catch (err) {
     console.log(err);
-    return res.status(500).json({ message: "서버 에러가 발생했습니다." });
   }
 };
+
+export default authMiddleware;
