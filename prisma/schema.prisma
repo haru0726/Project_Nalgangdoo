@@ -52,5 +52,6 @@ model CharacterList {
   
   accountRelation Account @relation(fields: [accountId], references: [accountId])
   characterRelation Character @relation(fields: [characterId], references: [characterId])
+  @@unique([accountId, characterId])
 }
 
