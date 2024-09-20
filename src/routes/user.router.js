@@ -170,6 +170,7 @@ router.patch(
 );
 
 /**
+
  * @desc 유저 정보 페이지 API
  *
  * @author 우종
@@ -201,6 +202,8 @@ router.get("/user-information/:userId", async (req, res, next) => {
 });
 
 /**
+
+
  * @desc 캐시 구매 API
  * @author 준호
  * @version 1.0
