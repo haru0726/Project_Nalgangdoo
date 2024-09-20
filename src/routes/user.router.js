@@ -111,6 +111,66 @@ router.post("/sign-in", async (req, res, next) => {
 });
 
 /**
+ * @desc 유저 비밀번호 /닉네임 변경 API
+ *
+ * @author 우종
+ *
+ * @abstract 유저의 아이디를 파라미터로 받고 토큰이 있을경우 기존 비밀번호가 일치한다면 비밀번호나 닉네임을 변경할 수 있음
+ */
+
+router.patch(
+  "/user-data-change/:userId",
+  authMiddleware,
+  async (req, res, next) => {
+    const { userId } = req.params;
+    const { currentPassword, newPassword, newUserName } = req.body;
+
+    try {
+      //사용자 정보 조회
+      const user = await prisma.account.findUnique({
+        where: { userId: userId },
+      });
+      //사용자 존재 여부 체크
+      if (!user) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+      }
+
+      //현재 비밀번호와 일치여부 체크
+      const passwordCheck = await bcrypt.compare(
+        currentPassword,
+        user.password
+      );
+      if (!passwordCheck) {
+        return res
+          .status(401)
+          .json({ message: "현재 비밀번호와 일치하지 않습니다." });
+      }
+      const updateData = {};
+      //새로운 비밀번호 해시화후 추가
+      if (newPassword) {
+        updateData.password = await bcrypt.hash(newPassword, 10);
+      }
+      //새로운 닉네임 추가
+      if (newUserName) {
+        updateData.userName = newUserName;
+      }
+      const updateUser = await prisma.account.update({
+        where: { userId: userId },
+        data: updateData,
+      });
+
+      return res.status(200).json({
+        message: "사용자 정보를 업데이트 하였습니다.",
+        user: updateUser,
+      });
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json({ message: "서버 에러가 발생했습니다." });
+    }
+  }
+);
+
+/**
  * @desc 캐시 구매 API
  * @author 준호
  * @version 1.0 트랙잭션 업데이트 필요
