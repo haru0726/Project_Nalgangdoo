@@ -143,7 +143,6 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
         where: { userId: currentUserId },
         data: {
           winCount: { increment: 1 },
-          loseCount: { increment: 0 },
         },
       });
 
@@ -151,7 +150,6 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
       await prisma.account.update({
         where: { userId },
         data: {
-          winCount: { increment: 0 },
           loseCount: { increment: 1 },
         },
       });
@@ -166,7 +164,6 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
         where: { userId },
         data: {
           winCount: { increment: 1 },
-          loseCount: { increment: 0 },
         },
       });
 
@@ -174,7 +171,6 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
       await prisma.account.update({
         where: { userId: currentUserId },
         data: {
-          winCount: { increment: 0 },
           loseCount: { increment: 1 },
         },
       });
@@ -230,7 +226,6 @@ router.post(
           .json({ message: "현재 사용자의 팀 구성원이 3명이 아닙니다." });
       }
 
-      console.log("currentUserCharacters:", currentUserCharactersFilter);
       //상대 사용자의 캐릭터 정보
 
       const enemyUserCharacters = await prisma.account.findFirst({
@@ -244,7 +239,7 @@ router.post(
       );
 
       //상대 사용자 캐릭터 보유현황 체크
-      console.log("enemyUserCharacters:", enemyUserCharacters);
+
       if (enemyUserCharacters.characters.length === 0) {
         return res
           .status(400)
@@ -335,7 +330,7 @@ router.post(
           where: { userId: currentUserId },
           data: {
             winCount: { increment: 1 },
-            loseCount: { increment: 0 },
+
             rankPoint: { increment: 10 },
           },
         });
@@ -344,7 +339,6 @@ router.post(
         await prisma.account.update({
           where: { userId: enemyUserId.userId },
           data: {
-            winCount: { increment: 0 },
             loseCount: { increment: 1 },
             rankPoint: { decrement: 10 },
           },
@@ -361,7 +355,7 @@ router.post(
           where: { userId: enemyUserId.userId },
           data: {
             winCount: { increment: 1 },
-            loseCount: { increment: 0 },
+
             rankPoint: { increment: 10 },
           },
         });
@@ -370,7 +364,6 @@ router.post(
         await prisma.account.update({
           where: { userId: currentUserId },
           data: {
-            winCount: { increment: 0 },
             loseCount: { increment: 1 },
             rankPoint: { decrement: 10 },
           },
