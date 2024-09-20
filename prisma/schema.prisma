@@ -21,6 +21,7 @@ model Account {
   loseCount Int @default(0)
   drowCount Int @default(0)
   rankPoint Int @default(100) // 랭킹 포인트. 플레이어 간의 점수 차가 클 수록 증감되는 값이 크면 좋겠다.
+  super Boolean @default(false) // 관리자인지 인가 처리용
   createAt DateTime @default(now())
 
   @@map("Account")
