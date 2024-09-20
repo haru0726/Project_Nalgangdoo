@@ -42,14 +42,22 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
         .json({ message: "상대 사용자 ID가 유효하지 않습니다." });
     }
     //팀 구성 인원 체크
+    currentUserCharacters.characters = currentUserCharacters.characters.filter(
+      (character) => character.isFormation === true
+    );
 
-    if (currentUserCharacters.length !== 3) {
+    enemyUserCharacters.characters = enemyUserCharacters.characters.filter(
+      (character) => character.isFormation === true
+    );
+
+    if (currentUserCharacters.characters.length !== 3) {
       return res
         .status(400)
         .json({ message: "현재 사용자의 팀 구성원이 3명이 아닙니다." });
     }
+    console.log(currentUserCharacters);
 
-    if (enemyUserCharacters.length !== 3) {
+    if (enemyUserCharacters.characters.length !== 3) {
       return res
         .status(400)
         .json({ message: "상대 사용자의 팀 구성원이 3명이 아닙니다." });
@@ -64,23 +72,45 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
       stamina: 0.2,
     };
 
-    // 각 팀의 총 점수 계산
+    // // 각 팀의 총 점수 계산
+    // 현재 사용자의 캐릭터 ID 배열
+    const currentUserCharacterIds = currentUserCharacters.characters.map(
+      (char) => char.characterId
+    );
 
-    const calculateScore = (characters) => {
-      return characters.reduce((totalScore, character) => {
-        const stats = character.characterRelation; //캐릭터의 스탯 정보
+    // 상대 사용자의 캐릭터 ID 배열
+    const enemyUserCharacterIds = enemyUserCharacters.characters.map(
+      (char) => char.characterId
+    );
+
+    // 각 팀의 캐릭터 정보 가져오기
+    const [currentUserCharactersDetails, enemyUserCharactersDetails] =
+      await Promise.all([
+        prisma.character.findMany({
+          where: { characterId: { in: currentUserCharacterIds } },
+        }),
+        prisma.character.findMany({
+          where: { characterId: { in: enemyUserCharacterIds } },
+        }),
+      ]);
+
+    // 점수 계산 함수
+    function calculateScore(characters) {
+      let totalScore = 0;
+      for (let i = 0; i < characters.length; i++) {
         const score =
-          stats.speed * statWeight.speed +
-          stats.goalDetermination * statWeight.goalDetermination +
-          stats.shootPower * statWeight.shootPower +
-          stats.defense * statWeight.defense +
-          stats.stamina * statWeight.stamina;
-        return totalScore + score;
-      }, 0);
-    };
+          characters[i].speed * statWeight.speed +
+          characters[i].goalDetermination * statWeight.goalDetermination +
+          characters[i].shootPower * statWeight.shootPower +
+          characters[i].defense * statWeight.defense +
+          characters[i].stamina * statWeight.stamina;
+        totalScore += score;
+      }
+      return totalScore;
+    }
 
-    const scoreA = calculateScore(currentUserCharacters); //현재 사용자의 팀 점수
-    const scoreB = calculateScore(enemyUserCharacters); //상대 사용자의 팀 점수
+    const scoreA = calculateScore(currentUserCharactersDetails); //현재 사용자의 팀 점수
+    const scoreB = calculateScore(enemyUserCharactersDetails); //상대 사용자의 팀 점수
     //승패 결정
     const maxScore = scoreA + scoreB;
     const rendomWinner = Math.random() * maxScore; //팀 스탯 점수에 비례하여 승률확인
@@ -90,16 +120,17 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
       //현재 유저 승리 처리
       const aScore = Math.floor(Math.random() * 6) + 2;
       const bScore = Math.floor(Math.random() * Math.min(5, aScore)); //A스코어보다 작은값
-      result = `A팀 승리: A${aScore} - ${bScore}B`;
+      result = `A팀 승리: A :${aScore} - ${bScore} : B`;
     } else {
       //상대 유저 승리 처리
       const bScore = Math.floor(Math.random() * 6) + 2;
       const aScore = Math.floor(Math.random() * Math.min(5, bScore)); //B스코어보다 작은값
-      result = `B팀 승리: B${bScore} - ${aScore}A`;
+      result = `B팀 승리: B :${bScore} - ${aScore} : A`;
     }
     //게임 결과를 응답으로 반환
     return res.status(200).json({ message: result });
   } catch (err) {
+    console.log(err);
     return res.status(500).json({ message: "서버 에러가 발생했습니다." });
   }
 });
