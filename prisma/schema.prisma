@@ -51,7 +51,7 @@ model CharacterList {
   quantity Int @default(1) // 캐릭터 수량
   isFormation Boolean @default(false) // 편성 여부
   
-  accountRelation Account @relation(fields: [accountId], references: [accountId])
-  characterRelation Character @relation(fields: [characterId], references: [characterId])
+  accountRelation Account @relation(fields: [accountId], references: [accountId], onDelete: Cascade)
+  characterRelation Character @relation(fields: [characterId], references: [characterId], onDelete: Cascade)
 }
 
