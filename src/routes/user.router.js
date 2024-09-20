@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { prisma } from "../utils/prisma/index.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
+import matchMiddleware from "../middlewares/match.middleware.js";
 
 const env = process.env;
 const router = express.Router();
@@ -90,22 +91,6 @@ router.post("/sign-in", async (req, res, next) => {
 
     return res.status(200).json({
       message: "로그인이 성공했습니다.",
-    });
-  } catch (err) {
-    console.log(err);
-  }
-});
-
-/**
- * @desc 로그인 인증이 필요한 테스트 api
- * @author 준호
- * @version 1.0
- */
-router.get("/test", authMiddleware, async (req, res, next) => {
-  try {
-    return res.status(200).json({
-      message: "hi",
-      user: req.user,
     });
   } catch (err) {
     console.log(err);
@@ -258,6 +243,10 @@ router.post("/character-draw", authMiddleware, async (req, res, next) => {
   } catch (err) {
     console.log(err);
   }
+});
+
+router.get("/test", authMiddleware, matchMiddleware, async (req, res, next) => {
+  return res.json({ message: "good" });
 });
 
 export default router;
