@@ -72,6 +72,8 @@ const matchMiddleware = async (req, res, next) => {
       `매치 유저: ${matchedUser.userName}, 랭킹 점수: ${matchedUser.rankPoint}`
     );
 
+    if (!matchedUser) return res.status(404).json({ message: "매칭 실패" });
+
     // 매칭된 유저 정보 저장
     req.matchedUser = matchedUser;
 
