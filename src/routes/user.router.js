@@ -113,7 +113,7 @@ router.post("/sign-in", async (req, res, next) => {
 /**
  * @desc 캐시 구매 API
  * @author 준호
- * @version 1.0 트랙잭션 업데이트 필요
+ * @version 1.0
  */
 router.patch("/cash", authMiddleware, async (req, res, next) => {
   try {
@@ -133,20 +133,15 @@ router.patch("/cash", authMiddleware, async (req, res, next) => {
       return res.status(404).json({ message: "존재하지 않는 계정입니다." });
     }
 
-    // 트랜잭션 시작
-    // 요청된 캐쉬 값 더하기
-    const updatedCash = account.userCash + userCash;
-
     // 업데이트된 내용을 account 테이블에 저장
     const updatedAccount = await prisma.account.update({
       where: {
         userId: userId,
       },
       data: {
-        userCash: updatedCash,
+        userCash: account.userCash + userCash,
       },
     });
-    // 트랜잭션 종료
 
     return res.status(200).json({
       message: "캐쉬 구매 완료~!",
@@ -258,8 +253,34 @@ router.post("/character-draw", authMiddleware, async (req, res, next) => {
   }
 });
 
-router.get("/test", authMiddleware, matchMiddleware, async (req, res, next) => {
-  return res.json({ message: "good" });
-});
+/**
+ * @desc 계정 삭제 API
+ * @author 준호
+ * @version 1.0
+ */
+router.delete("/account-delete", authMiddleware, async (req, res, next) => {
+  // 요청 받은 비번
+  const { password } = req.body;
 
+  // 유저 조회
+  const user = await prisma.account.findUnique({
+    where: { userId: req.user.userId },
+  });
+  if (!user) {
+    return res.status(404).json({ message: "존재하지 않는 계정입니다." });
+  }
+
+  // 비밀번호 검사
+  if (!(await bcrypt.compare(password, user.password))) {
+    return res.status(401).json({ message: "비밀번호가 일치하지 않습니다." });
+  }
+
+  // 계정 삭제
+  await prisma.account.delete({
+    where: { userId: user.userId },
+  });
+  console.log(req.user);
+
+  return res.status(200).json({ message: "계정이 삭제되었습니다." });
+});
 export default router;
