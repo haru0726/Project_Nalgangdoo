@@ -11,20 +11,30 @@ const router = express.Router();
 /**
  * @desc 회원가입 API
  * @author 준호
- * @version 1.0
+ * @version 1.1
  *
- * ~ 업데이트 내역
+ * 관리자 코드 추가, 관리자 코드는 선택적으로 요청
+ * @author 준호
  * @since 1.1
- * @author ㅇㄴㅇ
- *
- * ~ 업데이트 내역
- * @since 1.2
- * @authorㅇㄴㅇ
  */
 router.post("/sign-up", async (req, res, next) => {
   try {
     // 요청 본문값
-    const { userId, password, passwordConfirm, userName } = req.body;
+    const {
+      userId,
+      password,
+      passwordConfirm,
+      userName,
+      adminCode = null,
+    } = req.body;
+
+    // 관리자 코드 검증
+    if (adminCode && adminCode !== env.ADMIN_CODE) {
+      return res.status(400).json({ message: "코드가 올바르지 않습니다." });
+    }
+
+    // 관리자 코드가 일치하면 true 할당
+    let isSuper = adminCode === env.ADMIN_CODE ? true : false;
 
     // 동일한 아이디, 닉네임 조회
     const isExistUserId = await prisma.account.findUnique({
@@ -50,10 +60,13 @@ router.post("/sign-up", async (req, res, next) => {
 
     // account 테이블에 데이터 추가
     await prisma.account.create({
-      data: { userId, userName, password: hashedPassword },
+      data: { userId, userName, password: hashedPassword, super: isSuper },
     });
 
-    return res.status(201).json({ message: "회원가입이 완료되었습니다." });
+    return res.status(201).json({
+      message: "회원가입이 완료되었습니다.",
+      grade: isSuper ? "관리자 계정" : "일반 계정",
+    });
   } catch (err) {
     console.log("회원가입 에러:", err);
     return res.status(500).json({ message: "서버 오류가 발생했습니다." });
@@ -84,10 +97,10 @@ router.post("/sign-in", async (req, res, next) => {
     }
 
     // 토큰 발급
-    const token = jwt.sign({ userId: user.userId }, process.env.JWT_KEY, {
+    const token = jwt.sign({ userId: user.userId }, env.JWT_KEY, {
       expiresIn: "30m",
     });
-    res.setHeader("Authorization", `${process.env.JWT_KEY} ${token}`);
+    res.setHeader("Authorization", `${env.JWT_KEY} ${token}`);
 
     return res.status(200).json({
       message: "로그인이 성공했습니다.",
