@@ -170,4 +170,23 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
   }
 });
 
+/**
+ * @desc 랭크 게임 API
+ *
+ * @author 우종
+ *
+ * @abstract 매칭시 랭크포인트가 비슷한 랜덤한 상대와 매칭된다.*(미들웨어에서 비교할듯)
+ * 게임을 시작하면 팀 구성에 따른 총합 수치에 따라 승패 확률이 결정된다.
+ * 슬리한 팀의 경우 랭크포인트+ 패배한 팀의 경우 랭크포인트 -
+ */
+
+router.post("/games", authMiddleware, async (req, res, next) => {
+  const currentUserId = req.user.userId;
+
+  try {
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ massage: "서버 에러가 발생했습니다." });
+  }
+});
 export default router;
