@@ -51,16 +51,20 @@ const matchMiddleware = async (req, res, next) => {
       filteredUsers = allUsers
         .filter((user) => user.rankPoint < loginUserRankPoint) // 로그인한 유저보다 낮은 점수의 계정 필터
         .sort((a, b) => b.rankPoint - a.rankPoint); // 내림차순
-      // 가장 가까운 낮은 점수의 유저
-      filteredUsers = [filteredUsers[0]];
+      // 가장 가까운 낮은 점수의 유저가 존재할 경우만 매칭
+      if (filteredUsers.length > 0) {
+        filteredUsers = [filteredUsers[0]];
+      }
 
       // 2-2. 낮은 점수의 계정도 없다면 다음으로 높은 점수의 계정 선택
       if (filteredUsers.length === 0) {
         filteredUsers = allUsers
           .filter((user) => user.rankPoint > loginUserRankPoint) // 로그인한 유저보다 높은 점수의 계정 필터
           .sort((a, b) => a.rankPoint - b.rankPoint); // 오름차순
-        // 가장 가까운 높은 점수의 유저
-        filteredUsers = [filteredUsers[0]];
+        // 가장 가까운 높은 점수의 유저가 존재할 경우만 매칭
+        if (filteredUsers.length > 0) {
+          filteredUsers = [filteredUsers[0]];
+        }
       }
     }
 
@@ -71,7 +75,6 @@ const matchMiddleware = async (req, res, next) => {
     console.log(
       `매치 유저: ${matchedUser.userName}, 랭킹 점수: ${matchedUser.rankPoint}`
     );
-
     if (!matchedUser) return res.status(404).json({ message: "매칭 실패" });
 
     // 매칭된 유저 정보 저장
