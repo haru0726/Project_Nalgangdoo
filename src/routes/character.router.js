@@ -1,7 +1,6 @@
-
 import express from "express";
 import { prisma } from "../utils/prisma/index.js";
-
+import authMiddleware from "../middlewares/auth.middleware.js";
 const router = express.Router();
 /**
  * @desc 선수 전체 목록 조회 API
@@ -50,13 +49,6 @@ router.get("/character/:characterId", async (req, res, next) => {
     return res.status(500).json({ message: "서버 에러가 발생했습니다." });
   }
 });
-export default router;
-
-import express from "express";
-import { prisma } from "../utils/prisma/index.js";
-import authMiddleware from "../middlewares/auth.middleware.js";
-
-const router = express.Router();
 
 /**
  * @desc 캐릭터 생성 API
@@ -124,4 +116,3 @@ router.post("/character-data", authMiddleware, async (req, res, next) => {
 });
 
 export default router;
-
