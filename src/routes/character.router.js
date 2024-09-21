@@ -203,7 +203,7 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
     }
 
     // 강화 시작
-    const successEnhance = 1 - currentLevel * 0.2; // 강화 성공 확률
+    const successEnhance = 1 - currentLevel * 0.3; // 강화 성공 확률
 
     // 재료 차감
     await prisma.characterList.update({
@@ -232,6 +232,15 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
         },
         data: { ceiling: currentCeiling + 1 },
       });
+    }
+    //천장수치가 10일경우 다음강화 무조건 성공
+    if (currentCeiling === 10) {
+      await prisma.characterList.update({
+        where: { characterListId: hasCharacter.characterListId },
+        data: { level: currentLevel + 1, ceiling: 0 },
+      });
+
+      return res.status(200).json({ message: "강화 성공!" });
     }
 
     return res.status(200).json({
