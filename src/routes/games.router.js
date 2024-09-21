@@ -18,6 +18,18 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
   const currentUserId = req.user.userId; //jwt에서 추출한 사용자 ID
 
   try {
+    //유저 정보 체크
+    if (!currentUserId) {
+      return res
+        .status(400)
+        .json({ message: "현재 사용자 ID가 유효하지 않습니다." });
+    }
+
+    if (!userId || userId === null) {
+      return res
+        .status(400)
+        .json({ message: "상대 사용자 ID가 유효하지 않습니다." });
+    }
     //현재 사용자의 캐릭터 가져오기
     const currentUserCharacters = await prisma.account.findFirst({
       where: { userId: currentUserId },
@@ -29,19 +41,6 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
       where: { userId },
       include: { characters: true },
     });
-
-    //유저 정보 체크
-    if (!currentUserId) {
-      return res
-        .status(400)
-        .json({ message: "현재 사용자 ID가 유효하지 않습니다." });
-    }
-
-    if (!userId) {
-      return res
-        .status(400)
-        .json({ message: "상대 사용자 ID가 유효하지 않습니다." });
-    }
     //팀 구성 인원 체크
     currentUserCharacters.characters = currentUserCharacters.characters.filter(
       (character) => character.isFormation === true
@@ -179,7 +178,7 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
     return res.status(200).json({ message: result });
   } catch (err) {
     console.log(err);
-    return res.status(500).json({ message: "서버 에러가 발생했습니다." });
+    next(err);
   }
 });
 
@@ -372,7 +371,7 @@ router.post(
       return res.status(200).json({ message: result });
     } catch (err) {
       console.log(err);
-      return res.status(500).json({ message: "서버 에러가 발생했습니다." });
+      next(err);
     }
   }
 );

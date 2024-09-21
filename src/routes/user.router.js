@@ -164,12 +164,46 @@ router.patch(
       });
     } catch (err) {
       console.log(err);
-      return res.status(500).json({ message: "서버 에러가 발생했습니다." });
+      next(err);
     }
   }
 );
 
 /**
+
+ * @desc 유저 정보 페이지 API
+ *
+ * @author 우종
+ *
+ * @abstract 모든 유저의 승률 이름 랭크포인트를 검색할수있음
+ */
+
+router.get("/user-information/:userId", async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const userInfo = await prisma.account.findFirst({
+      where: { userId: userId },
+      select: {
+        userName: true,
+        rankPoint: true,
+        winCount: true,
+        loseCount: true,
+        drowCount: true,
+      },
+    });
+    if (!userInfo) {
+      return res.status(404).json({ message: "존재하지 않는 사용자입니다." });
+    }
+    return res.status(200).json(userInfo);
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+});
+
+/**
+
+
  * @desc 캐시 구매 API
  * @author 준호
  * @version 1.0
