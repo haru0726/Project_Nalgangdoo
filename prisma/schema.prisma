@@ -50,6 +50,8 @@ model CharacterList {
   characterId Int // 연결된 캐릭터
   quantity Int @default(1) // 캐릭터 수량
   isFormation Boolean @default(false) // 편성 여부
+  level Int @default(0) // 캐릭터 강화 레벨, 최대 5
+  ceiling Int @default(0) // 천장 수치, 최대 10
   
 
   accountRelation Account @relation(fields: [accountId], references: [accountId], onDelete: Cascade)
