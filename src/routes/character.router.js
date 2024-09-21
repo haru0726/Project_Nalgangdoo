@@ -210,7 +210,7 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
       where: {
         characterListId: hasCharacter.characterListId,
       },
-      data: { quantity: characterQuantity - currentLevel * 2 },
+      data: { quantity: characterQuantity - currentLevel },
     });
 
     // 강화 성공 여부
