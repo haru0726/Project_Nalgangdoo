@@ -117,6 +117,7 @@ router.post("/character-data", authMiddleware, async (req, res, next) => {
     return res.status(201).json({ message: "캐릭터가 생성되었습니다." });
   } catch (err) {
     console.log(err);
+    next(err);
   }
 });
 
@@ -174,7 +175,6 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
       return res.status(404).json({ message: "보유한 선수가 없습니다." });
     }
 
-
     // hasCharacter 데이터 예시
     // {
     //   characterListId: 5,
@@ -203,7 +203,7 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
     }
 
     // 강화 시작
-    const successEnhance = 1 - currentLevel * 0.1; // 강화 성공 확률
+    const successEnhance = 1 - currentLevel * 0.2; // 강화 성공 확률
 
     // 재료 차감
     await prisma.characterList.update({
@@ -241,6 +241,7 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
     });
   } catch (err) {
     console.log(err);
+    next(err);
   }
 });
 
