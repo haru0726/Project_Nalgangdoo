@@ -191,19 +191,19 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
     const characterQuantity = hasCharacter.quantity; // 요청한 캐릭터 보유 개수
 
     // 유효성 검사
-    if (currentLevel >= 5) {
+    if (currentLevel >= 10) {
       return res.status(400).json({ message: "최대 레벨입니다." });
     }
-    if (characterQuantity < currentLevel * 2 + 1) {
+    if (characterQuantity < currentLevel * 1 + 1) {
       return res.status(400).json({
         message: "재료가 충분하지 않습니다.",
-        need: currentLevel * 2,
+        need: currentLevel * 1,
         current: characterQuantity - 1,
       });
     }
 
     // 강화 시작
-    const successEnhance = 1 - currentLevel * 0.3; // 강화 성공 확률
+    const successEnhance = 1 - currentLevel * 0.1; // 강화 성공 확률
 
     // 재료 차감
     await prisma.characterList.update({
