@@ -174,6 +174,7 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
       return res.status(404).json({ message: "보유한 선수가 없습니다." });
     }
 
+
     // hasCharacter 데이터 예시
     // {
     //   characterListId: 5,
