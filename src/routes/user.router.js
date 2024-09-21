@@ -68,7 +68,7 @@ router.post("/sign-up", async (req, res, next) => {
     });
   } catch (err) {
     console.log("회원가입 에러:", err);
-    return res.status(500).json({ message: "서버 오류가 발생했습니다." });
+    next(err);
   }
 });
 
@@ -106,6 +106,7 @@ router.post("/sign-in", async (req, res, next) => {
     });
   } catch (err) {
     console.log(err);
+    next(err);
   }
 });
 
@@ -242,6 +243,7 @@ router.patch("/cash", authMiddleware, async (req, res, next) => {
     });
   } catch (err) {
     console.error(err);
+    next(err);
   }
 });
 
@@ -352,6 +354,7 @@ router.post("/character-draw", authMiddleware, async (req, res, next) => {
     });
   } catch (err) {
     console.log(err);
+    next(err);
   }
 });
 
@@ -361,28 +364,33 @@ router.post("/character-draw", authMiddleware, async (req, res, next) => {
  * @version 1.0
  */
 router.delete("/account-delete", authMiddleware, async (req, res, next) => {
-  // 요청 받은 비번
-  const { password } = req.body;
+  try {
+    // 요청 받은 비번
+    const { password } = req.body;
 
-  // 유저 조회
-  const user = await prisma.account.findUnique({
-    where: { userId: req.user.userId },
-  });
-  if (!user) {
-    return res.status(404).json({ message: "존재하지 않는 계정입니다." });
+    // 유저 조회
+    const user = await prisma.account.findUnique({
+      where: { userId: req.user.userId },
+    });
+    if (!user) {
+      return res.status(404).json({ message: "존재하지 않는 계정입니다." });
+    }
+
+    // 비밀번호 검사
+    if (!(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ message: "비밀번호가 일치하지 않습니다." });
+    }
+
+    // 계정 삭제
+    await prisma.account.delete({
+      where: { userId: user.userId },
+    });
+    console.log(req.user);
+
+    return res.status(200).json({ message: "계정이 삭제되었습니다." });
+  } catch (err) {
+    console.log(err);
+    next(er);
   }
-
-  // 비밀번호 검사
-  if (!(await bcrypt.compare(password, user.password))) {
-    return res.status(401).json({ message: "비밀번호가 일치하지 않습니다." });
-  }
-
-  // 계정 삭제
-  await prisma.account.delete({
-    where: { userId: user.userId },
-  });
-  console.log(req.user);
-
-  return res.status(200).json({ message: "계정이 삭제되었습니다." });
 });
 export default router;
