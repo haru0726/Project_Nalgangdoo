@@ -123,17 +123,18 @@ router.post("/character-data", authMiddleware, async (req, res, next) => {
 /**
  * @desc 선수 강화 API
  * @author 준호
- * @version 1.0 요청 받은 선수 조회까지 완료
+ * @version 1.0
  *
- * 1. 레벨 기본값은 0, 강화에 성공하면 +1, 최대 레벨은 5
- * 2. 강화에 필요한 재화는 동일한 선수. 필요한 선수 개수는 (레벨 * 2), 강화 성공/실패 상관없이 재료는 차감
+ * @todo
+ * 1. [완료] 레벨 기본값은 0, 강화에 성공하면 +1, 최대 레벨은 5
+ * 2. [완료] 강화에 필요한 재화는 동일한 선수. 필요한 선수 개수는 (레벨 * 2), 강화 성공/실패 상관없이 재료는 차감
  *    예) 레벨 4에서 5로 강화 시, 4 * 2 = 8개 선수. 레벨 0에서는 1개만 필요한 것으로 처리
  *    **주의** 강화하는 선수도 개수에 포함되므로 (강화 재료 개수 + 1) 해서 처리해야 됩니다.
- * 3. 강화 확률은 [1 - (레벨 * 0.1)] => 레벨이 증가함에 따라 확률이 줄어든다.
+ * 3. [완료] 강화 확률은 [1 - (레벨 * 0.1)] => 레벨이 증가함에 따라 확률이 줄어든다.
  *    0.1 보정값은 밸런스에 따라 조정
  * 4. 장기백(천장). 강화에 10번 실패하면 다음 강화는 무조건 성공.
  *    강화 성공 시천장 카운트는 0으로 초기화. 기본값 0
- * 5. 유효성 검사. 레벨 5일 때, 강화에 필요한 카드가 없을 시 status 400 반환.
+ * 5. [완료] 유효성 검사. 레벨 5일 때, 강화에 필요한 카드가 없을 시 status 400 반환.
  * 6. 기타... 트랜잭션 처리 / 참조 - CharacterList 테이블 / 강화 레벨 - level 컬럼, 천장 수치 - ceilng 컬럼
  */
 router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
@@ -173,10 +174,70 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
       return res.status(404).json({ message: "보유한 선수가 없습니다." });
     }
 
-    console.log(character); // 요청한 선수 정보
-    console.log(hasCharacter); // 조회된 캐릭터 정보 출력
+    // hasCharacter 데이터 예시
+    // {
+    //   characterListId: 5,
+    //   accountId: 1,
+    //   characterId: 1,
+    //   quantity: 82,
+    //   isFormation: false,
+    //   level: 0,
+    //   ceiling: 0
+    // }
 
-    return res.status(200).json({ message: "ㅇㅇ" });
+    const currentLevel = hasCharacter.level; // 요청한 캐릭터의 레벨
+    const currentCeiling = hasCharacter.ceiling; // 요청한 캐릭터의 천장 수치
+    const characterQuantity = hasCharacter.quantity; // 요청한 캐릭터 보유 개수
+
+    // 유효성 검사
+    if (currentLevel >= 5) {
+      return res.status(400).json({ message: "최대 레벨입니다." });
+    }
+    if (characterQuantity < currentLevel * 2 + 1) {
+      return res.status(400).json({
+        message: "재료가 충분하지 않습니다.",
+        need: currentLevel * 2,
+        current: characterQuantity - 1,
+      });
+    }
+
+    // 강화 시작
+    const successEnhance = 1 - currentLevel * 0.1; // 강화 성공 확률
+
+    // 재료 차감
+    await prisma.characterList.update({
+      where: {
+        characterListId: hasCharacter.characterListId,
+      },
+      data: { quantity: characterQuantity - currentLevel * 2 },
+    });
+
+    // 강화 성공 여부
+    const isSuccess = Math.random() <= successEnhance;
+
+    if (isSuccess) {
+      // 강화 성공, 레벨 +1, 천장 수치 0으로 초기화
+      await prisma.characterList.update({
+        where: {
+          characterListId: hasCharacter.characterListId,
+        },
+        data: { level: currentLevel + 1, ceiling: 0 },
+      });
+    } else {
+      // 강화 실패, 천장 수치 +1
+      await prisma.characterList.update({
+        where: {
+          characterListId: hasCharacter.characterListId,
+        },
+        data: { ceiling: currentCeiling + 1 },
+      });
+    }
+
+    return res.status(200).json({
+      message: isSuccess ? "강화 성공!" : "강화 실패...",
+      level: isSuccess ? currentLevel + 1 : currentLevel,
+      ceiling: isSuccess ? 0 : currentCeiling + 1,
+    });
   } catch (err) {
     console.log(err);
   }
