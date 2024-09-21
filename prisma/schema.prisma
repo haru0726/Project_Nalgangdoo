@@ -53,7 +53,9 @@ model CharacterList {
   level Int @default(0) // 캐릭터 강화 레벨, 최대 5
   ceiling Int @default(0) // 천장 수치, 최대 10
   
+
   accountRelation Account @relation(fields: [accountId], references: [accountId], onDelete: Cascade)
   characterRelation Character @relation(fields: [characterId], references: [characterId], onDelete: Cascade)
+  @@unique([accountId, characterId])
 }
 

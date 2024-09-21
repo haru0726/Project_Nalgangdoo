@@ -10,12 +10,17 @@ const router = express.Router();
  * @abstract 게임에 있는 모든 선수의 목록을 보여준다.
  */
 router.get("/character", async (req, res, next) => {
-  const character = await prisma.character.findMany({
-    select: {
-      name: true,
-    },
-  });
-  return res.status(200).json(character);
+  try {
+    const character = await prisma.character.findMany({
+      select: {
+        name: true,
+      },
+    });
+    return res.status(200).json(character);
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
 });
 
 /**
@@ -46,7 +51,7 @@ router.get("/character/:characterId", async (req, res, next) => {
     return res.status(200).json(character);
   } catch (err) {
     console.log(err);
-    return res.status(500).json({ message: "서버 에러가 발생했습니다." });
+    next(err);
   }
 });
 
