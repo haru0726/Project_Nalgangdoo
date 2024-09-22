@@ -191,7 +191,7 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
  */
 
 router.post(
-  "/games",
+  "/rank-games",
   authMiddleware,
   matchMiddleware,
   async (req, res, next) => {
@@ -300,6 +300,9 @@ router.post(
       //승패 결정
       const maxScore = scoreA + scoreB;
       const rendomWinner = Math.random() * maxScore; //팀 스탯 점수에 비례하여 승률확인
+
+      //게임진행중..api
+
       let result;
 
       //무승부일 경우
