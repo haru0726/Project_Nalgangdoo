@@ -121,12 +121,16 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
       //현재 사용자
       await prisma.account.update({
         where: { userId: currentUserId },
-        data: { drowCount: { increment: 1 } },
+        data: {
+          drowCount: { increment: 1 },
+        },
       });
       //상대 사용자
       await prisma.account.update({
         where: { userId },
-        data: { drowCount: { increment: 1 } },
+        data: {
+          drowCount: { increment: 1 },
+        },
       });
       return res.status(200).json({ message: "무승부 입니다!" });
     }
@@ -142,6 +146,7 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
         where: { userId: currentUserId },
         data: {
           winCount: { increment: 1 },
+          userCash: { increment: 500 },
         },
       });
 
@@ -163,6 +168,7 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
         where: { userId },
         data: {
           winCount: { increment: 1 },
+          userCash: { increment: 500 },
         },
       });
 
@@ -332,7 +338,7 @@ router.post(
           where: { userId: currentUserId },
           data: {
             winCount: { increment: 1 },
-
+            userCash: { increment: 500 },
             rankPoint: { increment: 10 },
           },
         });
@@ -357,7 +363,7 @@ router.post(
           where: { userId: enemyUserId.userId },
           data: {
             winCount: { increment: 1 },
-
+            userCash: { increment: 500 },
             rankPoint: { increment: 10 },
           },
         });
