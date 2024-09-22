@@ -22,5 +22,5 @@ app.use("/api", [
 
 app.use(ErrorHandlingMiddleware); //에러 처리 미들웨어
 app.listen(port, () => {
-  console.log(`listening on port ${port}`);
+  console.log(`날강두 온라인`);
 });
