@@ -248,11 +248,15 @@ router.patch("/cash", authMiddleware, async (req, res, next) => {
 /**
  * @desc 선수 뽑기 API
  * @author 준호
- * @version 1.1
+ * @version 1.2
  *
  * 트랜잭션 적용
  * @author 준호
  * @since 1.1
+ *
+ * 선수 등급 별 확률 적용
+ * @author 준호
+ * @since 1.2
  *
  * 1. 미들웨어 거치고
  * 2. 가차 횟수를 요청받는다 --> N
@@ -297,6 +301,16 @@ router.post("/character-draw", authMiddleware, async (req, res, next) => {
         .json({ message: "현재 캐릭터가 존재하지 않습니다." });
     }
 
+    // allCharacters 순회하며 5성 선수면 1개, 4성 선수면 4개 push
+    // 5성: 5분의1 20%, 4성: 5분의4 80%
+    const weightedCharacters = [];
+    for (const character of allCharacters) {
+      const weight = character.star === 5 ? 1 : 4;
+      for (let i = 0; i < weight; i++) {
+        weightedCharacters.push(character);
+      }
+    }
+
     // 뽑은 캐릭터 배열
     const drawnCharacters = [];
 
@@ -310,8 +324,8 @@ router.post("/character-draw", authMiddleware, async (req, res, next) => {
 
       // 2. 랜덤한 캐릭터 drawCount만큼 뽑기
       for (let i = 0; i < drawCount; i++) {
-        const randomIdx = Math.floor(Math.random() * allCharacters.length);
-        drawnCharacters.push(allCharacters[randomIdx]);
+        const randomIdx = Math.floor(Math.random() * weightedCharacters.length);
+        drawnCharacters.push(weightedCharacters[randomIdx]);
       }
 
       // 3. 뽑은 캐릭터 순회하며 기존 CharacterList에 있는지 검사 및 처리
