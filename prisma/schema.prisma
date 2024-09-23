@@ -7,9 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 계정과 캐릭터 N:M 관계가 필요하다
-
-// 계정
 model Account {
   accountId Int @id @default(autoincrement())
   userId String @unique // 유저 아이디
@@ -28,36 +25,31 @@ model Account {
   @@map("Account")
 }
 
-// 게임 상에 존재하는 모든 캐릭터
 model Character {
-  characterId Int @id @default(autoincrement())
-  name String @unique // 캐릭터 이름, 중복 불가
-  speed Int // 각종 스탯...
+  characterId       Int             @id @default(autoincrement())
+  name              String          @unique
+  speed             Int
   goalDetermination Int
   shootPower Int
   defense Int
   stamina Int
   star Int @default(4)
   accountCharacters CharacterList[] // 중간 테이블로 N:M 관계 맺기
-  // 의문점: 스탯을 JSON으로 관리하는 게 좋은지, 컬럼으로 관리하는 게 좋은지
 
   @@map("Character")
 }
 
-// 계정이 보유한 캐릭터
-// Account : Character = N:M 관계 설정을 위한 중간 테이블
 model CharacterList {
-  characterListId Int @id @default(autoincrement())
-  accountId Int // 연결된 계정
-  characterId Int // 연결된 캐릭터
-  quantity Int @default(1) // 캐릭터 수량
-  isFormation Boolean @default(false) // 편성 여부
-  level Int @default(0) // 캐릭터 강화 레벨, 최대 5
-  ceiling Int @default(0) // 천장 수치, 최대 10
-  
-
-  accountRelation Account @relation(fields: [accountId], references: [accountId], onDelete: Cascade)
+  characterListId   Int       @id @default(autoincrement())
+  accountId         Int
+  characterId       Int
+  quantity          Int       @default(1)
+  isFormation       Boolean   @default(false)
+  level             Int       @default(0)
+  ceiling           Int       @default(0)
+  accountRelation   Account   @relation(fields: [accountId], references: [accountId], onDelete: Cascade)
   characterRelation Character @relation(fields: [characterId], references: [characterId], onDelete: Cascade)
-  @@unique([accountId, characterId])
-}
 
+  @@unique([accountId, characterId])
+  @@index([characterId], map: "CharacterList_characterId_fkey")
+}
