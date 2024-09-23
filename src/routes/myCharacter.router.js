@@ -32,6 +32,7 @@ router.get("/myCharacter/:userId", async (req, res, next) => {
       select: {
         characterId: true,
         name: true,
+        speed : true,
       },
     });
 
@@ -43,6 +44,7 @@ router.get("/myCharacter/:userId", async (req, res, next) => {
       return {
         name: character ? character.name : "Unknown",
         quantity: item.quantity,
+        speed : character.speed,
       };
     });
 

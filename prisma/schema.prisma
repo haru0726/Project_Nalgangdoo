@@ -8,19 +8,19 @@ datasource db {
 }
 
 model Account {
-  accountId Int @id @default(autoincrement())
-  userId String @unique // 유저 아이디
-  userName String @unique // 닉네임
-  password String
-  characters CharacterList[] // 중간 테이블로 N:M 관계 맺기
-  userCash Int @default(5000) // 캐쉬
-  winCount Int @default(0)
-  loseCount Int @default(0)
-  drowCount Int @default(0)
-  rankPoint Int @default(100) // 랭킹 포인트. 플레이어 간의 점수 차가 클 수록 증감되는 값이 크면 좋겠다.
-  tier String @default("Bronze")
-  super Boolean @default(false) // 관리자인지 인가 처리용
-  createAt DateTime @default(now())
+  accountId  Int             @id @default(autoincrement())
+  userId     String          @unique
+  userName   String          @unique
+  password   String
+  userCash   Int             @default(5000)
+  winCount   Int             @default(0)
+  loseCount  Int             @default(0)
+  drowCount  Int             @default(0)
+  rankPoint  Int             @default(100)
+  super      Boolean         @default(false)
+  createAt   DateTime        @default(now())
+  tier       String          @default("Bronze")
+  characters CharacterList[]
 
   @@map("Account")
 }
@@ -28,13 +28,13 @@ model Account {
 model Character {
   characterId       Int             @id @default(autoincrement())
   name              String          @unique
+  star              Int             @default(4)
   speed             Int
   goalDetermination Int
-  shootPower Int
-  defense Int
-  stamina Int
-  star Int @default(4)
-  accountCharacters CharacterList[] // 중간 테이블로 N:M 관계 맺기
+  shootPower        Int
+  defense           Int
+  stamina           Int
+  accountCharacters CharacterList[]
 
   @@map("Character")
 }
