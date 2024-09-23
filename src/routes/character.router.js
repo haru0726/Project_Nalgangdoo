@@ -143,6 +143,7 @@ router.post("/character-data", authMiddleware, async (req, res, next) => {
     return res.status(201).json({ message: "캐릭터가 생성되었습니다." });
   } catch (err) {
     console.log(err);
+    next(err);
   }
 });
 
@@ -216,13 +217,13 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
     const characterQuantity = hasCharacter.quantity; // 요청한 캐릭터 보유 개수
 
     // 유효성 검사
-    if (currentLevel >= 5) {
+    if (currentLevel >= 10) {
       return res.status(400).json({ message: "최대 레벨입니다." });
     }
-    if (characterQuantity < currentLevel * 2 + 1) {
+    if (characterQuantity < currentLevel * 1 + 1) {
       return res.status(400).json({
         message: "재료가 충분하지 않습니다.",
-        need: currentLevel * 2,
+        need: currentLevel * 1,
         current: characterQuantity - 1,
       });
     }
@@ -235,7 +236,7 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
       where: {
         characterListId: hasCharacter.characterListId,
       },
-      data: { quantity: characterQuantity - currentLevel * 2 },
+      data: { quantity: characterQuantity - currentLevel },
     });
 
     // 강화 성공 여부
@@ -258,6 +259,15 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
         data: { ceiling: currentCeiling + 1 },
       });
     }
+    //천장수치가 10일경우 다음강화 무조건 성공
+    if (currentCeiling === 10) {
+      await prisma.characterList.update({
+        where: { characterListId: hasCharacter.characterListId },
+        data: { level: currentLevel + 1, ceiling: 0 },
+      });
+
+      return res.status(200).json({ message: "강화 성공!" });
+    }
 
     return res.status(200).json({
       message: isSuccess ? "강화 성공!" : "강화 실패...",
@@ -266,6 +276,7 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
     });
   } catch (err) {
     console.log(err);
+    next(err);
   }
 });
 
