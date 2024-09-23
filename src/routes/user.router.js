@@ -3,7 +3,6 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { prisma } from "../utils/prisma/index.js";
 import authMiddleware from "../middlewares/auth.middleware.js";
-import matchMiddleware from "../middlewares/match.middleware.js";
 
 const env = process.env;
 const router = express.Router();
@@ -69,7 +68,7 @@ router.post("/sign-up", async (req, res, next) => {
     });
   } catch (err) {
     console.log("회원가입 에러:", err);
-    return res.status(500).json({ message: "서버 오류가 발생했습니다." });
+    next(err);
   }
 });
 
@@ -107,13 +106,108 @@ router.post("/sign-in", async (req, res, next) => {
     });
   } catch (err) {
     console.log(err);
+    next(err);
   }
 });
 
 /**
+ * @desc 유저 비밀번호 /닉네임 변경 API
+ *
+ * @author 우종
+ *
+ * @abstract 유저의 아이디를 파라미터로 받고 토큰이 있을경우 기존 비밀번호가 일치한다면 비밀번호나 닉네임을 변경할 수 있음
+ */
+
+router.patch(
+  "/user-data-change/:userId",
+  authMiddleware,
+  async (req, res, next) => {
+    const { userId } = req.params;
+    const { currentPassword, newPassword, newUserName } = req.body;
+
+    try {
+      //사용자 정보 조회
+      const user = await prisma.account.findUnique({
+        where: { userId: userId },
+      });
+      //사용자 존재 여부 체크
+      if (!user) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+      }
+
+      //현재 비밀번호와 일치여부 체크
+      const passwordCheck = await bcrypt.compare(
+        currentPassword,
+        user.password
+      );
+      if (!passwordCheck) {
+        return res
+          .status(401)
+          .json({ message: "현재 비밀번호와 일치하지 않습니다." });
+      }
+      const updateData = {};
+      //새로운 비밀번호 해시화후 추가
+      if (newPassword) {
+        updateData.password = await bcrypt.hash(newPassword, 10);
+      }
+      //새로운 닉네임 추가
+      if (newUserName) {
+        updateData.userName = newUserName;
+      }
+      const updateUser = await prisma.account.update({
+        where: { userId: userId },
+        data: updateData,
+      });
+
+      return res.status(200).json({
+        message: "사용자 정보를 업데이트 하였습니다.",
+        user: updateUser,
+      });
+    } catch (err) {
+      console.log(err);
+      next(err);
+    }
+  }
+);
+
+/**
+
+ * @desc 유저 정보 페이지 API
+ *
+ * @author 우종
+ *
+ * @abstract 모든 유저의 승률 이름 랭크포인트를 검색할수있음
+ */
+
+router.get("/user-information/:userId", async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const userInfo = await prisma.account.findFirst({
+      where: { userId: userId },
+      select: {
+        userName: true,
+        rankPoint: true,
+        winCount: true,
+        loseCount: true,
+        drowCount: true,
+      },
+    });
+    if (!userInfo) {
+      return res.status(404).json({ message: "존재하지 않는 사용자입니다." });
+    }
+    return res.status(200).json(userInfo);
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+});
+
+/**
+
+
  * @desc 캐시 구매 API
  * @author 준호
- * @version 1.0 트랙잭션 업데이트 필요
+ * @version 1.0
  */
 router.patch("/cash", authMiddleware, async (req, res, next) => {
   try {
@@ -133,20 +227,15 @@ router.patch("/cash", authMiddleware, async (req, res, next) => {
       return res.status(404).json({ message: "존재하지 않는 계정입니다." });
     }
 
-    // 트랜잭션 시작
-    // 요청된 캐쉬 값 더하기
-    const updatedCash = account.userCash + userCash;
-
     // 업데이트된 내용을 account 테이블에 저장
     const updatedAccount = await prisma.account.update({
       where: {
         userId: userId,
       },
       data: {
-        userCash: updatedCash,
+        userCash: account.userCash + userCash,
       },
     });
-    // 트랜잭션 종료
 
     return res.status(200).json({
       message: "캐쉬 구매 완료~!",
@@ -154,13 +243,22 @@ router.patch("/cash", authMiddleware, async (req, res, next) => {
     });
   } catch (err) {
     console.error(err);
+    next(err);
   }
 });
 
 /**
  * @desc 선수 뽑기 API
  * @author 준호
- * @version 1.0 트랜잭션 업데이트 필요
+ * @version 1.2
+ *
+ * 트랜잭션 적용
+ * @author 준호
+ * @since 1.1
+ *
+ * 선수 등급 별 확률 적용
+ * @author 준호
+ * @since 1.2
  *
  * 1. 미들웨어 거치고
  * 2. 가차 횟수를 요청받는다 --> N
@@ -197,57 +295,73 @@ router.post("/character-draw", authMiddleware, async (req, res, next) => {
       return res.status(402).json({ message: "캐시가 부족합니다." });
     }
 
-    // 캐쉬 차감
-    await prisma.account.update({
-      where: { userId },
-      data: { userCash: account.userCash - 500 * drawCount },
+    // 게임 모든 캐릭터 가져오기 (날강두 제외)
+    const allCharacters = await prisma.character.findMany({
+      where: {
+        name: {
+          not: "날강두", // 날강두 제외
+        },
+      },
     });
 
-    // 게임 모든 캐릭터 가져오기
-    const allCharacters = await prisma.character.findMany();
-    if (allCharacters.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "현재 캐릭터가 존재하지 않습니다." });
-    }
-
-    // 랜덤한 캐릭터 drawCount만큼 뽑기
-    const drawnCharacters = [];
-    for (let i = 0; i < drawCount; i++) {
-      const randomIdx = Math.floor(Math.random() * allCharacters.length);
-      drawnCharacters.push(allCharacters[randomIdx]);
-    }
-
-    // 뽑은 캐릭터 순회하며 기존 CharacterList에 있는지 검사
-    for (const character of drawnCharacters) {
-      const existingCharacter = await prisma.characterList.findFirst({
-        where: {
-          accountId: account.accountId,
-          characterId: character.characterId,
-        },
-      });
-
-      if (existingCharacter) {
-        // 캐릭터가 이미 있으면 수량 증가
-        await prisma.characterList.update({
-          where: {
-            characterListId: existingCharacter.characterListId,
-          },
-          data: {
-            quantity: existingCharacter.quantity + 1,
-          },
-        });
-      } else {
-        // 캐릭터가 없으면 새로 추가
-        await prisma.characterList.create({
-          data: {
-            accountId: account.accountId,
-            characterId: character.characterId,
-            quantity: 1,
-          },
-        });
+    // allCharacters 순회하며 5성 선수면 1개, 4성 선수면 4개 push
+    // 5성: 5분의1 20%, 4성: 5분의4 80%
+    const weightedCharacters = [];
+    for (const character of allCharacters) {
+      const weight = character.star === 5 ? 1 : 4;
+      for (let i = 0; i < weight; i++) {
+        weightedCharacters.push(character);
       }
     }
+
+    // 뽑은 캐릭터 배열
+    const drawnCharacters = [];
+
+    // 트랙잭션
+    const transaction = await prisma.$transaction(async (tx) => {
+      // 1. 캐쉬 차감
+      await tx.account.update({
+        where: { userId },
+        data: { userCash: account.userCash - 500 * drawCount },
+      });
+
+      // 2. 랜덤한 캐릭터 drawCount만큼 뽑기
+      for (let i = 0; i < drawCount; i++) {
+        const randomIdx = Math.floor(Math.random() * weightedCharacters.length);
+        drawnCharacters.push(weightedCharacters[randomIdx]);
+      }
+
+      // 3. 뽑은 캐릭터 순회하며 기존 CharacterList에 있는지 검사 및 처리
+      for (const character of drawnCharacters) {
+        const existingCharacter = await tx.characterList.findFirst({
+          where: {
+            accountId: account.accountId,
+            characterId: character.characterId,
+          },
+        });
+
+        if (existingCharacter) {
+          // 동일한 캐릭터 갖고 있으면 수량만 +1
+          await tx.characterList.update({
+            where: {
+              characterListId: existingCharacter.characterListId,
+            },
+            data: {
+              quantity: existingCharacter.quantity + 1,
+            },
+          });
+        } else {
+          // 동일한 캐릭터 없으면 새로 생성
+          await tx.characterList.create({
+            data: {
+              accountId: account.accountId,
+              characterId: character.characterId,
+              quantity: 1,
+            },
+          });
+        }
+      }
+    });
 
     return res.status(200).json({
       message: "새로운 선수들이 감독님을 섬깁니다.",
@@ -255,11 +369,43 @@ router.post("/character-draw", authMiddleware, async (req, res, next) => {
     });
   } catch (err) {
     console.log(err);
+    next(err);
   }
 });
 
-router.get("/test", authMiddleware, matchMiddleware, async (req, res, next) => {
-  return res.json({ message: "good" });
-});
+/**
+ * @desc 계정 삭제 API
+ * @author 준호
+ * @version 1.0
+ */
+router.delete("/account-delete", authMiddleware, async (req, res, next) => {
+  try {
+    // 요청 받은 비번
+    const { password } = req.body;
 
+    // 유저 조회
+    const user = await prisma.account.findUnique({
+      where: { userId: req.user.userId },
+    });
+    if (!user) {
+      return res.status(404).json({ message: "존재하지 않는 계정입니다." });
+    }
+
+    // 비밀번호 검사
+    if (!(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ message: "비밀번호가 일치하지 않습니다." });
+    }
+
+    // 계정 삭제
+    await prisma.account.delete({
+      where: { userId: user.userId },
+    });
+    console.log(req.user);
+
+    return res.status(200).json({ message: "계정이 삭제되었습니다." });
+  } catch (err) {
+    console.log(err);
+    next(er);
+  }
+});
 export default router;
