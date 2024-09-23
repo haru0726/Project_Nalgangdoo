@@ -31,11 +31,11 @@ router.get("/character", async (req, res, next) => {
  * @abstract 게임에 있는 모든 선수중 원하는 캐릭터의 이름 스탯 등의 상세 정보를 보여준다.
  */
 
-router.get("/character/:characterId", async (req, res, next) => {
+router.get("/character/:name", async (req, res, next) => {
   try {
-    const { characterId } = req.params;
+    const { name } = req.params;
     const character = await prisma.character.findFirst({
-      where: { characterId: parseInt(characterId, 10) },
+      where: { name: name },
       select: {
         name: true,
         speed: true,
