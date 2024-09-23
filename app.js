@@ -6,7 +6,7 @@ import MyCharacterRouter from "./src/routes/myCharacter.router.js";
 import CharacterSellRouter from "./src/routes/CharacterSell.router.js";
 import CharacterRouter from "./src/routes/character.router.js";
 import ErrorHandlingMiddleware from "./src/middlewares/error-handling.middleware.js";
-
+import TeamRouter from "./src/routes/team.router.js";
 const app = express();
 const port = 3000;
 app.use(express.json());
@@ -18,6 +18,7 @@ app.use("/api", [
   CharacterRouter,
   MyCharacterRouter,
   CharacterSellRouter,
+  TeamRouter
 ]);
 
 app.use(ErrorHandlingMiddleware); //에러 처리 미들웨어
