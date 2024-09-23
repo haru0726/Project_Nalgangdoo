@@ -386,22 +386,28 @@ router.post(
 
       // rankPoint가 1000점에 도달했는지 확인
       if(userAccount.rankPoint >= 1000){
-        // CharacterList에 추가 여부 확인
-        const userCharacterAdd = await prisma.characterList.findFirst({
-          where: {
-            accountId : userAccount.accountId,
-            name : "날강두",
-          },
+        // 캐릭터 ID 찾기
+        const character = await prisma.character.findUnique({
+            where : {name : "날강두"}
         });
 
-        // 캐릭터가 없으면 추가
-        if(!userCharacterAdd){
-          await prisma.characterList.create({
-            data: {
-              accountId: userAccount.accountId,
-              name : "날강두",
+        // 캐릭터가 있으면 실행
+        if(character){
+          const userCharacterAdd = await prisma.characterList.findFirst({
+            where:{
+              accountId : userAccount.accountId,
+              characterId : character.characterId,
             }
           })
+
+          if (!userCharacterAdd) {
+            await prisma.characterList.create({
+              data: {
+                accountId: userAccount.accountId,
+                characterId: character.characterId, // characterId 사용
+              },
+            });
+          }
         }
       }
 
@@ -413,21 +419,27 @@ router.post(
 
       if(enemyAccount.rankPoint >= 1000){
         // CharacterList에 추가 여부 확인
-        const enemyCharacterAdd = await prisma.characterList.findFirst({
-          where: {
-            accountId : enemyAccount.accountId,
-            name : "날강두",
-          },
+        const character = await prisma.character.findUnique({
+          where: { name: "날강두" },
         });
 
-        // 캐릭터가 없으면 추가
-        if(!enemyCharacterAdd){
-          await prisma.characterList.create({
-            data: {
-              accountId: enemyAccount.accountId,
-              name : "날강두",
-            }
-          })
+        if(character) {
+          const enemyCharacterAdd = await prisma. characterList.findFirst({
+            where : {
+              accountId : enemyAccount.accountId,
+              characterId: character.characterId,
+            },
+          });
+
+          // 캐릭터가 없으면 추가
+          if(!enemyCharacterAdd){
+            await prisma.characterList.create({
+              data: {
+                accountId: enemyAccount.accountId,
+                characterId: character.characterId,
+              }
+            })
+          }
         }
       }
 
