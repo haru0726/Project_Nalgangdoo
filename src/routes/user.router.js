@@ -184,6 +184,7 @@ router.get("/user-information/:userId", async (req, res, next) => {
         winCount: true,
         loseCount: true,
         drowCount: true,
+        tier: true,
       },
     });
     if (!userInfo) {
