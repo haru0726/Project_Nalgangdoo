@@ -266,8 +266,11 @@
 
 ## 선수강화 API
 **Endpoint**: `/character-enhance`
-**Method**: `PATCH` 
+
+**Method**: `PATCH`
+
 **Description**: 요청받은 캐릭터의 이름을 통해 강화를 진행한다
+
 **Request Body**:
 
 -userId: (string) 유저 아이디
