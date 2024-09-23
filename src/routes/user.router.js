@@ -232,9 +232,11 @@ router.patch("/cash", authMiddleware, async (req, res, next) => {
       },
     });
 
+    let totalcash = updatedAccount.userCash.toLocaleString();
+
     return res.status(200).json({
       message: "캐쉬 구매 완료~!",
-      "현재 캐쉬": updatedAccount.userCash,
+      "현재 캐쉬": totalcash,
     });
   } catch (err) {
     console.error(err);
