@@ -20,6 +20,7 @@
 
 ## JWT 토큰 검증 미들웨어
 **Description**:로그인한 사용자의 토큰이 DB의 데이터와 일치하는지 검증한다. 
+**Response**: 
 - `401 Unauthorized`: 토큰이 없습니다.
 - `403 Forbidden`: 토큰이 유효하지 않습니다.
 
@@ -75,73 +76,78 @@
 - `userCash` : (int) 충전할 금액
 
 **Response**:  
-- `200 OK`: 캐쉬 구매 완료~! / "현재 캐쉬": 현재 유저가 보유한 금액액
+- `200 OK`: 캐쉬 구매 완료~! / "현재 캐쉬": 현재 유저가 보유한 금액
 - `400 Bad Request`: 값이 올바르지 않습니다.
 - `404 Not Found` : 존재하지 않는 계정입니다.
 
 ---
 
 ## 보유 캐시 API
-**Endpoint**: `/api/cash/balance`  
+**Endpoint**: `/api/my-cash`  
 **Method**: `GET`  
-**Description**: 유저의 보유 캐시 조회 API.  
-**Query Parameters**:
-- `userId`: (string) 유저 아이디
-
+**Description**: 토큰을 보유한 사용자가 get요청을 보낼경우 토큰에ID와 일치하는 계정을찾아 보유간 캐시값을 보내준다.  
 **Response**:  
-- `200 OK`: 캐시 조회 성공  
-- `404 Not Found`: 유저를 찾을 수 없음
+- `200 OK`: 보유 캐시 : n원 입니다. 
+- `404 Not Found`: 계정을 찾을 수 없습니다.
 
 ---
 
 ## 캐릭터 뽑기 API
 **Endpoint**: `/api/character-draw`  
 **Method**: `POST`  
-**Description**: 캐릭터 뽑기 기능을 처리하는 API.  
+**Description**: 토큰을 보유한 사용자가 요청한 수량에 따른 캐릭터를 응답한다. 응답시 요청한 수량에따라 n*500의 캐시를 차감한다.  
 **Request Body**:
-- `userId`: (string) 유저 아이디
-- `drawType`: (string) 뽑기 종류 (ex: 일반, 프리미엄)
+- `drawCount` : (int) 뽑기 횟수
 
 **Response**:  
-- `200 OK`: 뽑기 성공  
-- `400 Bad Request`: 잘못된 요청
+- `200 OK`: 보유 캐시 : n원 입니다. 
+- `400 Bad Request`: 올바른 값을 입력하세요.
+- `402 Payment Required` : 캐시가 부족합니다.
+- `404 Not Found` : 존재하지 않는 계정입니다.
 
 ---
 
 ## 캐릭터 생성 API
 **Endpoint**: `/api/character-data`  
 **Method**: `POST`  
-**Description**: 새로운 캐릭터를 생성하는 API.  
+**Description**: 관리자 권한을 가진 계정으로 요청을 보낼경우 새로운 캐릭터를 DB에 생성한다.  
 **Request Body**:
-- `userId`: (string) 유저 아이디
-- `characterName`: (string) 캐릭터 이름
+- `name`:(string) 선수의 이름
+- `speed`:(int) 선수의 속도
+- `goalDetermination`:(int) 선수의 골 결정력
+- `shootPower`:(int) 선수의 슛 파워
+- `defense`:(int) 선수의 방어력
+- `stamina`:(int) 선수의 스태미나
+- `star`: (int) 선수의 별 등급
 
 **Response**:  
-- `200 OK`: 생성 성공  
-- `400 Bad Request`: 잘못된 요청
+- `201 Created`: 캐릭터가 생성되었습니다.  
+- `400 Bad Request`: 필드가 누락되었습니다. /star 필드는 4, 5, 100만 입력할 수 있습니다.
+- `403 Forbidden` : 관리자 권한이 필요합니다.
+- `404 Not Found` : 존재하지 않는 계정입니다.
+- `409 Conflict` : 이미 존재하는 이름입니다.
 
 ---
 
 ## 선수 전체목록 조회 API
 **Endpoint**: `/api/character`  
 **Method**: `GET`  
-**Description**: 게임 내 선수 전체 목록을 조회하는 API.  
+**Description**: 캐릭터 생성 API로 생성한 모든 캐릭터를 조회할 수 있다. 
 
 **Response**:  
-- `200 OK`: 조회 성공  
-- `500 Internal Server Error`: 서버 오류
+- `200 OK`: 캐릭터 전제 목록 
 
 ---
 
 ## 선수 상세 조회 API
-**Endpoint**: `/api/character/:characterId`  
+**Endpoint**: `/api/character/:name`  
 **Method**: `GET`  
-**Description**: 특정 선수의 상세 정보를 조회하는 API.  
+**Description**: 특정 선수의 이름을 URL에 입력하면 해당 선수의 모든 정보를 보내준다.  
 **Path Parameters**:
-- `playerId`: (string) 선수 아이디
+- `name`: (string) 선수 이름
 
 **Response**:  
-- `200 OK`: 조회 성공  
+- `200 OK`: 선수 상세 정보
 - `404 Not Found`: 선수를 찾을 수 없음
 
 ---
@@ -149,72 +155,71 @@
 ## 팀 편성 API
 **Endpoint**: `/api/team`  
 **Method**: `POST`  
-**Description**: 유저 팀을 구성하는 API.  
+**Description**: 계정내 보유한 캐릭터로 3명의 팀원을 구성하여 하나의 팀을 만든다.  
 **Request Body**:
-- `userId`: (string) 유저 아이디
-- `players`: (array) 선수 목록
-
+- `TeamMembers` :  [{"name" : "프란츠 베켄바워"},{"name" : "가린샤"},{"name" : "게르트 뮐러"}]
+  
 **Response**:  
-- `200 OK`: 편성 성공  
-- `400 Bad Request`: 잘못된 요청
+- `200 OK`: 팀원 편성을 완료했습니다.
+- `400 Bad Request`: 팀원은 3명이어야 합니다.
+- `404 Not Found` : 보유한 캐릭터 중 3명을 선택해야 합니다.
 
 ---
 
 ## 친선게임 API
 **Endpoint**: `/api/games/:userId`  
 **Method**: `POST`  
-**Description**: 다른 유저와의 친선게임을 시작하는 API.  
-**Request Body**:
-- `userId`: (string) 유저 아이디
-- `opponentId`: (string) 상대 유저 아이디
+**Description**: 토큰을 보유한 사용자가 대결을 할 상대를 URL로 입력하여 본인을 제외한 다른 유저와 대결을 할 수 있다.
+**Path Parameters**:
+- `userId` : (string) 지목할 상대 
 
 **Response**:  
 - `200 OK`: 게임 시작 성공  
 - `400 Bad Request`: 잘못된 요청
+
+---
+
+## 점수 기반 자동 매치메이킹 미들웨어
+**Description**: 유저의 점수를 기반으로 자동으로 상대를 매칭하는 미들웨어.
+**Response**: 
+-`404 Not Found`:존재하지 않는 계정입니다. / 매칭 실패
 
 ---
 
 ## 랭크게임 API
 **Endpoint**: `/api/rank-games`  
 **Method**: `POST`  
-**Description**: 랭크 게임을 시작하는 API.  
-**Request Body**:
-- `userId`: (string) 유저 아이디
-
+**Description**: 매칭시스템을 통해 비슷한 랭크포인트를 가진 사용자와 랜덤으로 매칭된다 이를 통해 랭크포인트를 올리거나 내릴 수 있으며 티어를 변동시킬 수 있다.  
 **Response**:  
-- `200 OK`: 게임 시작 성공  
-- `400 Bad Request`: 잘못된 요청
+- `200 OK`: 무승부 입니다! / 게임결과  
+- `400 Bad Request`: 자신과는 대결할 수 없습니다. / 현재 사용자 ID가 유효하지 않습니다. / 상대 사용자 ID가 유효하지 않습니다. / 현재 사용자의 팀 구성원이 3명이 아닙니다. 상대 사용자의 팀 구성원이 3명이 아닙니다.
 
 ---
 
 ## 유저 정보 페이지 API
 **Endpoint**: `/api/user-information/:userId`  
 **Method**: `GET`  
-**Description**: 특정 유저의 정보를 조회하는 API.  
+**Description**: 현재 존재하는 모든 유저의 정보를 검색하여 볼 수 있다. 보고자 하는 유저의 ID를 입력하여 유저의 이름,랭크포인트,승률,티어를 볼 수 있다.  
 **Path Parameters**:
 - `userId`: (string) 유저 아이디
 
 **Response**:  
-- `200 OK`: 조회 성공  
-- `404 Not Found`: 유저를 찾을 수 없음
+- `200 OK`: 유저 정보 
+- `404 Not Found`: 존재하지 않는 사용자입니다.
 
 ---
 
 ## 유저 랭킹 조회 API
 **Endpoint**: `/api/rankPage`  
 **Method**: `GET`  
-**Description**: 유저 랭킹을 조회하는 API.  
+**Description**: DB의 있는 계정에 랭크 포인트에 따라 내림차순으로 순위를 정렬하여 보내준다. 
 
 **Response**:  
-- `200 OK`: 조회 성공  
-- `500 Internal Server Error`: 서버 오류
+- `200 OK`: 랭킹보드
 
 ---
 
-## 점수 기반 자동 매치메이킹 미들웨어
-**Description**: 유저의 점수를 기반으로 자동으로 상대를 매칭하는 미들웨어.
 
----
 
 ## 선수 강화 기능 API
 **Endpoint**: `/api/character-enhance`  
@@ -234,19 +239,26 @@
 ## 보유중인 캐릭터 조회 API
 **Endpoint**: `/api/myCharacter/:userId`  
 **Method**: `GET`  
-**Description**: 유저가 보유중인 캐릭터 목록을 조회하는 API.  
+**Description**: 사용자가 보유중인 캐릭터들을 조회한다.
 **Path Parameters**:
 - `userId`: (string) 유저 아이디
 
 **Response**:  
-- `200 OK`: 조회 성공  
-- `404 Not Found`: 유저를 찾을 수 없음
-
+- `200 OK`: 보유 캐릭터 정보
+- `404 Not Found`: 캐릭터가 없습니다.
 ---
 
 ## 캐릭터 되팔기 API
 **Endpoint**: `/api/sell`  
 **Method**: `POST`  
-**Description**: 보유 중인 캐릭터를 되파는 API.  
+**Description**: 요청받은 캐릭터의 이름과 개수를 입력받아 입력받은 캐릭터를 그 개수만큼 판매한다.  
 **Request Body**:
 - `userId`: (string) 유저 아이디
+
+**Response**:  
+- `200 OK`: 캐릭터 판매 완료.
+- `400 Bad Request` : 잘못된 입력입니다. / 보유한 캐릭터 수량이 부족합니다.
+- `401 Unauthorized` : 사용자 인증 실패. 로그인 해주세요.
+- `404 Not Found`: 계정을 찾을 수 없습니다. / 캐릭터를 찾을 수 없습니다.
+- 
+---
