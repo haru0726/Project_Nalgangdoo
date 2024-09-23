@@ -21,6 +21,7 @@ model Account {
   loseCount Int @default(0)
   drowCount Int @default(0)
   rankPoint Int @default(100) // 랭킹 포인트. 플레이어 간의 점수 차가 클 수록 증감되는 값이 크면 좋겠다.
+  tier String @default("Bronze")
   super Boolean @default(false) // 관리자인지 인가 처리용
   createAt DateTime @default(now())
 
@@ -36,6 +37,7 @@ model Character {
   shootPower Int
   defense Int
   stamina Int
+  star Int @default(4)
   accountCharacters CharacterList[] // 중간 테이블로 N:M 관계 맺기
   // 의문점: 스탯을 JSON으로 관리하는 게 좋은지, 컬럼으로 관리하는 게 좋은지
 
