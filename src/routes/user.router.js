@@ -291,13 +291,14 @@ router.post("/character-draw", authMiddleware, async (req, res, next) => {
       return res.status(402).json({ message: "캐시가 부족합니다." });
     }
 
-    // 게임 모든 캐릭터 가져오기
-    const allCharacters = await prisma.character.findMany();
-    if (allCharacters.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "현재 캐릭터가 존재하지 않습니다." });
-    }
+    // 게임 모든 캐릭터 가져오기 (날강두 제외)
+    const allCharacters = await prisma.character.findMany({
+      where: {
+        name: {
+          not: "날강두", // 날강두 제외
+        },
+      },
+    });
 
     // 뽑은 캐릭터 배열
     const drawnCharacters = [];
