@@ -348,7 +348,10 @@ router.post(
           where: { userId: enemyUserId.userId },
           data: {
             loseCount: { increment: 1 },
-            rankPoint: { decrement: 10 },
+            rankPoint: {
+              decrement:
+                enemyUserId.rankPoint >= 10 ? 10 : enemyUserId.rankPoint || 0,
+            },
           },
         });
       } else {
@@ -373,32 +376,37 @@ router.post(
           where: { userId: currentUserId },
           data: {
             loseCount: { increment: 1 },
-            rankPoint: { decrement: 10 },
+            rankPoint: {
+              decrement:
+                currentUserId.rankPoint >= 10
+                  ? 10
+                  : currentUserId.rankPoint || 0,
+            },
           },
         });
       }
 
       // 유저에 rankPoint 가져오기
       const userAccount = await prisma.account.findUnique({
-        where: {userId: currentUserId},
-        select : { accountId: true, rankPoint : true}
+        where: { userId: currentUserId },
+        select: { accountId: true, rankPoint: true },
       });
 
       // rankPoint가 1000점에 도달했는지 확인
-      if(userAccount.rankPoint >= 1000){
+      if (userAccount.rankPoint >= 1000) {
         // 캐릭터 ID 찾기
         const character = await prisma.character.findUnique({
-            where : {name : "날강두"}
+          where: { name: "날강두" },
         });
 
         // 캐릭터가 있으면 실행
-        if(character){
+        if (character) {
           const userCharacterAdd = await prisma.characterList.findFirst({
-            where:{
-              accountId : userAccount.accountId,
-              characterId : character.characterId,
-            }
-          })
+            where: {
+              accountId: userAccount.accountId,
+              characterId: character.characterId,
+            },
+          });
 
           if (!userCharacterAdd) {
             await prisma.characterList.create({
@@ -413,32 +421,32 @@ router.post(
 
       // 적팀의 rankPoint확인
       const enemyAccount = await prisma.account.findUnique({
-        where : {userId : enemyUserId.userId},
-        select : {accountId: true, rankPoint : true},
+        where: { userId: enemyUserId.userId },
+        select: { accountId: true, rankPoint: true },
       });
 
-      if(enemyAccount.rankPoint >= 1000){
+      if (enemyAccount.rankPoint >= 1000) {
         // CharacterList에 추가 여부 확인
         const character = await prisma.character.findUnique({
           where: { name: "날강두" },
         });
 
-        if(character) {
-          const enemyCharacterAdd = await prisma. characterList.findFirst({
-            where : {
-              accountId : enemyAccount.accountId,
+        if (character) {
+          const enemyCharacterAdd = await prisma.characterList.findFirst({
+            where: {
+              accountId: enemyAccount.accountId,
               characterId: character.characterId,
             },
           });
 
           // 캐릭터가 없으면 추가
-          if(!enemyCharacterAdd){
+          if (!enemyCharacterAdd) {
             await prisma.characterList.create({
               data: {
                 accountId: enemyAccount.accountId,
                 characterId: character.characterId,
-              }
-            })
+              },
+            });
           }
         }
       }
@@ -495,7 +503,7 @@ router.post(
           data: { tier: enemyTier },
         }),
       ]);
-      
+
       return res.status(200).json({ message: result });
     } catch (err) {
       console.log(err);
