@@ -198,8 +198,6 @@ router.get("/user-information/:userId", async (req, res, next) => {
 });
 
 /**
-
-
  * @desc 캐시 구매 API
  * @author 준호
  * @version 1.0
@@ -220,6 +218,11 @@ router.patch("/cash", authMiddleware, async (req, res, next) => {
     });
     if (!account) {
       return res.status(404).json({ message: "존재하지 않는 계정입니다." });
+    }
+
+    // 유효성 검사
+    if (userCash < 1) {
+      return res.status(400).json({ message: "값이 올바르지 않습니다." });
     }
 
     // 업데이트된 내용을 account 테이블에 저장
