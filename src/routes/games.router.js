@@ -378,6 +378,59 @@ router.post(
         });
       }
 
+      // 유저에 rankPoint 가져오기
+      const userAccount = await prisma.account.findUnique({
+        where: {userId: currentUserId},
+        select : { accountId: true, rankPoint : true}
+      });
+
+      // rankPoint가 1000점에 도달했는지 확인
+      if(userAccount.rankPoint >= 1000){
+        // CharacterList에 추가 여부 확인
+        const userCharacterAdd = await prisma.characterList.findFirst({
+          where: {
+            accountId : userAccount.accountId,
+            name : "날강두",
+          },
+        });
+
+        // 캐릭터가 없으면 추가
+        if(!userCharacterAdd){
+          await prisma.characterList.create({
+            data: {
+              accountId: userAccount.accountId,
+              name : "날강두",
+            }
+          })
+        }
+      }
+
+      // 적팀의 rankPoint확인
+      const enemyAccount = await prisma.account.findUnique({
+        where : {userId : enemyUserId.userId},
+        select : {accountId: true, rankPoint : true},
+      });
+
+      if(enemyAccount.rankPoint >= 1000){
+        // CharacterList에 추가 여부 확인
+        const enemyCharacterAdd = await prisma.characterList.findFirst({
+          where: {
+            accountId : enemyAccount.accountId,
+            name : "날강두",
+          },
+        });
+
+        // 캐릭터가 없으면 추가
+        if(!enemyCharacterAdd){
+          await prisma.characterList.create({
+            data: {
+              accountId: enemyAccount.accountId,
+              name : "날강두",
+            }
+          })
+        }
+      }
+
       //현재 사용자 체크
       const currentUser = await prisma.account.findUnique({
         where: { userId: currentUserId },
@@ -430,6 +483,7 @@ router.post(
           data: { tier: enemyTier },
         }),
       ]);
+      
       return res.status(200).json({ message: result });
     } catch (err) {
       console.log(err);
