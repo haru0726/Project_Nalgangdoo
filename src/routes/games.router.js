@@ -19,6 +19,9 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
 
   try {
     //유저 정보 체크
+    if (userId === currentUserId) {
+      return res.status(400).json({ message: "자신과는 대결할 수 없습니다." });
+    }
     if (!currentUserId) {
       return res
         .status(400)
