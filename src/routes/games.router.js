@@ -377,6 +377,59 @@ router.post(
           },
         });
       }
+
+      //현재 사용자 체크
+      const currentUser = await prisma.account.findUnique({
+        where: { userId: currentUserId },
+      });
+
+      //상대 사용자 체크
+      const enemyUser = await prisma.account.findUnique({
+        where: { userId: enemyUserId.userId },
+      });
+
+      const newCurrentRankPoint = currentUser.rankPoint;
+      const newEnemyRankPoint = enemyUser.rankPoint;
+
+      //현재 사용자 티어 결정
+      let currentTier;
+      if (newCurrentRankPoint < 400) {
+        currentTier = "Bronze";
+      } else if (newCurrentRankPoint < 600) {
+        currentTier = "Silver";
+      } else if (newCurrentRankPoint < 800) {
+        currentTier = "Gold";
+      } else if (newCurrentRankPoint < 1000) {
+        currentTier = "Diamond";
+      } else if (newCurrentRankPoint >= 1000) {
+        currentTier = "Chalienger";
+      }
+      //상대 사용자 티어 결정
+      let enemyTier;
+      if (newEnemyRankPoint < 400) {
+        enemyTier = "Bronze";
+      } else if (newEnemyRankPoint < 600) {
+        enemyTier = "Silver";
+      } else if (newEnemyRankPoint < 800) {
+        enemyTier = "Gold";
+      } else if (newEnemyRankPoint < 1000) {
+        enemyTier = "Diamond";
+      } else if (newEnemyRankPoint >= 1000) {
+        enemyTier = "Chalienger";
+      }
+
+      //티어 업데이트
+
+      await Promise.all([
+        prisma.account.update({
+          where: { userId: currentUserId },
+          data: { tier: currentTier },
+        }),
+        prisma.account.update({
+          where: { userId: enemyUserId.userId },
+          data: { tier: enemyTier },
+        }),
+      ]);
       return res.status(200).json({ message: result });
     } catch (err) {
       console.log(err);
