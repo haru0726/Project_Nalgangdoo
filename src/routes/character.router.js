@@ -58,15 +58,26 @@ router.get("/character/:characterId", async (req, res, next) => {
 /**
  * @desc 캐릭터 생성 API
  * @author 준호
- * @version 1.0
+ * @version 1.1
+ *
+ * 선수 등급 요청 추가, 생략 시 기본 4성
+ * @author 준호
+ * @since 1.1
  *
  * 별도의 인가 과정을 통해 관리자인지 확인하면 좋겠다.
  */
 router.post("/character-data", authMiddleware, async (req, res, next) => {
   try {
     // 요청 받은 캐릭터 정보
-    const { name, speed, goalDetermination, shootPower, defense, stamina } =
-      req.body;
+    const {
+      name,
+      speed,
+      goalDetermination,
+      shootPower,
+      defense,
+      stamina,
+      star = 4,
+    } = req.body;
 
     // 인증 미들웨어에서 받은 유저 아이디
     const { userId } = req.user;
@@ -99,6 +110,8 @@ router.post("/character-data", authMiddleware, async (req, res, next) => {
     const isExistCharacterName = await prisma.character.findUnique({
       where: { name },
     });
+    // 유효한 star 값
+    const validStars = [4, 5, 100];
 
     // 유효성 검사
     const missingFields = requiredFields.filter((field) => !field);
@@ -108,10 +121,23 @@ router.post("/character-data", authMiddleware, async (req, res, next) => {
     if (isExistCharacterName) {
       return res.status(409).json({ message: "이미 존재하는 이름입니다." });
     }
+    if (!validStars.includes(star)) {
+      return res
+        .status(400)
+        .json({ message: "star 필드는 4, 5, 100만 입력할 수 있습니다." });
+    }
 
     // character 테이블에 요청 받은 캐릭터 추가
     await prisma.character.create({
-      data: { name, speed, goalDetermination, shootPower, defense, stamina },
+      data: {
+        name,
+        speed,
+        goalDetermination,
+        shootPower,
+        defense,
+        stamina,
+        star,
+      },
     });
 
     return res.status(201).json({ message: "캐릭터가 생성되었습니다." });
@@ -173,7 +199,6 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
     if (!hasCharacter) {
       return res.status(404).json({ message: "보유한 선수가 없습니다." });
     }
-
 
     // hasCharacter 데이터 예시
     // {
