@@ -264,16 +264,15 @@
 ---
 
 
-선수강화 API
-Endpoint: /character-enhance
-Method: `PATCH` 
-Description: 요청받은 캐릭터의 이름을 통해 강화를 진행한다
-Request Body:
+## 선수강화 API
+**Endpoint**: `/character-enhance`
+**Method**: `PATCH` 
+**Description**: 요청받은 캐릭터의 이름을 통해 강화를 진행한다
+**Request Body**:
 
-userId: (string) 유저 아이디
-Response:
+-userId: (string) 유저 아이디
+-Response:
 
-200 OK: 강화 성공! / 강화 성공!(100%) 강화 실패...
-400 Bad Request : 최대 레벨입니다. / 재료가 충분하지 않습니다.
-404 Not Found: 존재하지 않는 계정입니다. / 존재하지 않는 캐릭터입니다. / 보유한 선수가 없습니다.
-    }
+- `200 OK`: 강화 성공! / 강화 성공!(100%) 강화 실패...
+- `400 Bad Request` : 최대 레벨입니다. / 재료가 충분하지 않습니다.
+- `404 Not Found`: 존재하지 않는 계정입니다. / 존재하지 않는 캐릭터입니다. / 보유한 선수가 없습니다.
