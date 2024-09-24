@@ -223,7 +223,7 @@ router.post(
       //현재 사용자 캐릭터 보유현황 체크
       if (currentUserCharacters.characters.length === 0) {
         return res.status(400).json({
-          message: "상대 사용자가 캐릭터를 보유하고 있지 않습니다.",
+          message: "현재 사용자가 캐릭터를 보유하고 있지 않습니다.",
         });
       }
 
