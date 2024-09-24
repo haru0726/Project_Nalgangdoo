@@ -276,3 +276,17 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
 
 export default router;
 
+    // 점수 계산 함수
+    function calculateScore(characters) {
+      let totalScore = 0;
+      for (let i = 0; i < characters.length; i++) {
+        const score =
+          characters[i].speed * statWeight.speed +
+          characters[i].goalDetermination * statWeight.goalDetermination +
+          characters[i].shootPower * statWeight.shootPower +
+          characters[i].defense * statWeight.defense +
+          characters[i].stamina * statWeight.stamina;
+        totalScore += score;
+      }
+      return totalScore;
+    }

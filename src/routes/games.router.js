@@ -19,13 +19,16 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
 
   try {
     //유저 정보 체크
+    if (userId === currentUserId) {
+      return res.status(400).json({ message: "자신과는 대결할 수 없습니다." });
+    }
     if (!currentUserId) {
       return res
         .status(400)
         .json({ message: "현재 사용자 ID가 유효하지 않습니다." });
     }
 
-    if (!userId || userId === null) {
+    if (!userId) {
       return res
         .status(400)
         .json({ message: "상대 사용자 ID가 유효하지 않습니다." });
@@ -41,6 +44,10 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
       where: { userId },
       include: { characters: true },
     });
+    //상대 사용자 존재 유무 체크
+    if (!enemyUserCharacters) {
+      res.status(400).json({ message: "존재하지 않는 사용자입니다." });
+    }
     //팀 구성 인원 체크
     currentUserCharacters.characters = currentUserCharacters.characters.filter(
       (character) => character.isFormation === true
@@ -94,16 +101,30 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
         }),
       ]);
 
-    // 점수 계산 함수
-    function calculateScore(characters) {
+    // 점수 계산 함수 (강화 수치를 포함하여 계산)
+    function calculateScore(character) {
       let totalScore = 0;
-      for (let i = 0; i < characters.length; i++) {
+      for (let i = 0; i < character.length; i++) {
+        const enhancedSpeed =
+          character[i].speed + (character[i].enhancement?.speed || 0);
+        const enhancedGoalDetermination =
+          character[i].goalDetermination +
+          (character[i].enhancement?.goalDetermination || 0);
+        const enhancedShootPower =
+          character[i].shootPower +
+          (character[i].enhancement?.shootPower || 0);
+        const enhancedDefense =
+          character[i].defense + (character[i].enhancement?.defense || 0);
+        const enhancedStamina =
+          character[i].stamina + (character[i].enhancement?.stamina || 0);
+
         const score =
-          characters[i].speed * statWeight.speed +
-          characters[i].goalDetermination * statWeight.goalDetermination +
-          characters[i].shootPower * statWeight.shootPower +
-          characters[i].defense * statWeight.defense +
-          characters[i].stamina * statWeight.stamina;
+          enhancedSpeed * statWeight.speed +
+          enhancedGoalDetermination * statWeight.goalDetermination +
+          enhancedShootPower * statWeight.shootPower +
+          enhancedDefense * statWeight.defense +
+          enhancedStamina * statWeight.stamina;
+
         totalScore += score;
       }
       return totalScore;
@@ -121,12 +142,16 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
       //현재 사용자
       await prisma.account.update({
         where: { userId: currentUserId },
-        data: { drowCount: { increment: 1 } },
+        data: {
+          drowCount: { increment: 1 },
+        },
       });
       //상대 사용자
       await prisma.account.update({
         where: { userId },
-        data: { drowCount: { increment: 1 } },
+        data: {
+          drowCount: { increment: 1 },
+        },
       });
       return res.status(200).json({ message: "무승부 입니다!" });
     }
@@ -142,6 +167,7 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
         where: { userId: currentUserId },
         data: {
           winCount: { increment: 1 },
+          userCash: { increment: 500 },
         },
       });
 
@@ -163,6 +189,7 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
         where: { userId },
         data: {
           winCount: { increment: 1 },
+          userCash: { increment: 500 },
         },
       });
 
@@ -214,7 +241,7 @@ router.post(
       //현재 사용자 캐릭터 보유현황 체크
       if (currentUserCharacters.characters.length === 0) {
         return res.status(400).json({
-          message: "상대 사용자가 캐릭터를 보유하고 있지 않습니다.",
+          message: "현재 사용자가 캐릭터를 보유하고 있지 않습니다.",
         });
       }
 
@@ -280,16 +307,30 @@ router.post(
           }),
         ]);
 
-      // 점수 계산 함수
-      function calculateScore(characters) {
+      // 점수 계산 함수 (강화 수치를 포함하여 계산)
+      function calculateScore(character) {
         let totalScore = 0;
-        for (let i = 0; i < characters.length; i++) {
+        for (let i = 0; i < character.length; i++) {
+          const enhancedSpeed =
+            character[i].speed + (character[i].enhancement?.speed || 0);
+          const enhancedGoalDetermination =
+            character[i].goalDetermination +
+            (character[i].enhancement?.goalDetermination || 0);
+          const enhancedShootPower =
+            character[i].shootPower +
+            (character[i].enhancement?.shootPower || 0);
+          const enhancedDefense =
+            character[i].defense + (character[i].enhancement?.defense || 0);
+          const enhancedStamina =
+            character[i].stamina + (character[i].enhancement?.stamina || 0);
+
           const score =
-            characters[i].speed * statWeight.speed +
-            characters[i].goalDetermination * statWeight.goalDetermination +
-            characters[i].shootPower * statWeight.shootPower +
-            characters[i].defense * statWeight.defense +
-            characters[i].stamina * statWeight.stamina;
+            enhancedSpeed * statWeight.speed +
+            enhancedGoalDetermination * statWeight.goalDetermination +
+            enhancedShootPower * statWeight.shootPower +
+            enhancedDefense * statWeight.defense +
+            enhancedStamina * statWeight.stamina;
+
           totalScore += score;
         }
         return totalScore;
@@ -332,7 +373,7 @@ router.post(
           where: { userId: currentUserId },
           data: {
             winCount: { increment: 1 },
-
+            userCash: { increment: 500 },
             rankPoint: { increment: 10 },
           },
         });
@@ -342,7 +383,10 @@ router.post(
           where: { userId: enemyUserId.userId },
           data: {
             loseCount: { increment: 1 },
-            rankPoint: { decrement: 10 },
+            rankPoint: {
+              decrement:
+                enemyUserId.rankPoint >= 10 ? 10 : enemyUserId.rankPoint || 0,
+            },
           },
         });
       } else {
@@ -357,7 +401,7 @@ router.post(
           where: { userId: enemyUserId.userId },
           data: {
             winCount: { increment: 1 },
-
+            userCash: { increment: 500 },
             rankPoint: { increment: 10 },
           },
         });
@@ -367,10 +411,134 @@ router.post(
           where: { userId: currentUserId },
           data: {
             loseCount: { increment: 1 },
-            rankPoint: { decrement: 10 },
+            rankPoint: {
+              decrement:
+                currentUserId.rankPoint >= 10
+                  ? 10
+                  : currentUserId.rankPoint || 0,
+            },
           },
         });
       }
+
+      // 유저에 rankPoint 가져오기
+      const userAccount = await prisma.account.findUnique({
+        where: { userId: currentUserId },
+        select: { accountId: true, rankPoint: true },
+      });
+
+      // rankPoint가 1000점에 도달했는지 확인
+      if (userAccount.rankPoint >= 1000) {
+        // 캐릭터 ID 찾기
+        const character = await prisma.character.findUnique({
+          where: { name: "날강두" },
+        });
+
+        // 캐릭터가 있으면 실행
+        if (character) {
+          const userCharacterAdd = await prisma.characterList.findFirst({
+            where: {
+              accountId: userAccount.accountId,
+              characterId: character.characterId,
+            },
+          });
+
+          if (!userCharacterAdd) {
+            await prisma.characterList.create({
+              data: {
+                accountId: userAccount.accountId,
+                characterId: character.characterId, // characterId 사용
+              },
+            });
+          }
+        }
+      }
+
+      // 적팀의 rankPoint확인
+      const enemyAccount = await prisma.account.findUnique({
+        where: { userId: enemyUserId.userId },
+        select: { accountId: true, rankPoint: true },
+      });
+
+      if (enemyAccount.rankPoint >= 1000) {
+        // CharacterList에 추가 여부 확인
+        const character = await prisma.character.findUnique({
+          where: { name: "날강두" },
+        });
+
+        if (character) {
+          const enemyCharacterAdd = await prisma.characterList.findFirst({
+            where: {
+              accountId: enemyAccount.accountId,
+              characterId: character.characterId,
+            },
+          });
+
+          // 캐릭터가 없으면 추가
+          if (!enemyCharacterAdd) {
+            await prisma.characterList.create({
+              data: {
+                accountId: enemyAccount.accountId,
+                characterId: character.characterId,
+              },
+            });
+          }
+        }
+      }
+
+      //현재 사용자 체크
+      const currentUser = await prisma.account.findUnique({
+        where: { userId: currentUserId },
+      });
+
+      //상대 사용자 체크
+      const enemyUser = await prisma.account.findUnique({
+        where: { userId: enemyUserId.userId },
+      });
+
+      const newCurrentRankPoint = currentUser.rankPoint;
+      const newEnemyRankPoint = enemyUser.rankPoint;
+
+      //현재 사용자 티어 결정
+      let currentTier;
+      if (newCurrentRankPoint < 400) {
+        currentTier = "Bronze";
+      } else if (newCurrentRankPoint < 600) {
+        currentTier = "Silver";
+      } else if (newCurrentRankPoint < 800) {
+        currentTier = "Gold";
+      } else if (newCurrentRankPoint < 1000) {
+        currentTier = "Diamond";
+      } else if (newCurrentRankPoint >= 1000) {
+        currentTier = "Chalienger";
+      }
+      //상대 사용자 티어 결정
+      let enemyTier;
+      if (newEnemyRankPoint < 400) {
+        enemyTier = "Bronze";
+      } else if (newEnemyRankPoint < 600) {
+        enemyTier = "Silver";
+      } else if (newEnemyRankPoint < 800) {
+        enemyTier = "Gold";
+      } else if (newEnemyRankPoint < 1000) {
+        enemyTier = "Diamond";
+      } else if (newEnemyRankPoint >= 1000) {
+        enemyTier = "Chalienger";
+      }
+
+      //티어 업데이트
+
+      await Promise.all([
+        prisma.account.update({
+          where: { userId: currentUserId },
+          data: { tier: currentTier },
+        }),
+        prisma.account.update({
+          where: { userId: enemyUserId.userId },
+          data: { tier: enemyTier },
+        }),
+      ]);
+
       return res.status(200).json({ message: result });
     } catch (err) {
       console.log(err);
