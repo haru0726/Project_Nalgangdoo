@@ -12,6 +12,7 @@ router.get("/rankPage", async (req, res, next) => {
       },
       select: {
         userName: true,
+        tier: true,
         winCount: true,
         drowCount: true,
         loseCount: true,
@@ -23,6 +24,7 @@ router.get("/rankPage", async (req, res, next) => {
     const rankList = ranking.map((account, index) => ({
       rank: index + 1, // 1부터 시작
       userName: account.userName,
+      tier: account.tier,
       winCount: account.winCount,
       drowCount: account.drowCount,
       loseCount: account.loseCount,
