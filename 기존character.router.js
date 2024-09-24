@@ -11,12 +11,12 @@ const router = express.Router();
  */
 router.get("/character", async (req, res, next) => {
   try {
-    const characters = await prisma.character.findMany({
+    const character = await prisma.character.findMany({
       select: {
         name: true,
       },
     });
-    return res.status(200).json(characters);
+    return res.status(200).json(character);
   } catch (err) {
     console.log(err);
     next(err);
@@ -58,7 +58,7 @@ router.get("/character/:name", async (req, res, next) => {
 /**
  * @desc 캐릭터 생성 API
  * @author 준호
- * @version 1.0
+ * @version 1.1
  *
  * 선수 등급 요청 추가, 생략 시 기본 4성
  * @author 준호
@@ -84,9 +84,7 @@ router.post("/character-data", authMiddleware, async (req, res, next) => {
 
     // 유저 아이디 조회
     const account = await prisma.account.findUnique({
-      where: {
-        userId: userId,
-      },
+      where: { userId: userId, },
     });
     if (!account) {
       return res.status(404).json({ message: "존재하지 않는 계정입니다." });
@@ -122,9 +120,7 @@ router.post("/character-data", authMiddleware, async (req, res, next) => {
       return res.status(409).json({ message: "이미 존재하는 이름입니다." });
     }
     if (!validStars.includes(star)) {
-      return res
-        .status(400)
-        .json({ message: "star 필드는 4, 5, 100만 입력할 수 있습니다." });
+      return res.status(400).json({ message: "star 필드는 4, 5, 100만 입력할 수 있습니다." });
     }
 
     // character 테이블에 요청 받은 캐릭터 추가
@@ -152,7 +148,7 @@ router.post("/character-data", authMiddleware, async (req, res, next) => {
  * @author 준호
  * @version 1.0
  *
- *  @todo
+ * @todo
  * 1. [완료] 레벨 기본값은 0, 강화에 성공하면 +1, 최대 레벨은 5
  * 2. [완료] 강화에 필요한 재화는 동일한 선수. 필요한 선수 개수는 (레벨 * 2), 강화 성공/실패 상관없이 재료는 차감
  *    예) 레벨 4에서 5로 강화 시, 4 * 2 = 8개 선수. 레벨 0에서는 1개만 필요한 것으로 처리
@@ -166,7 +162,7 @@ router.post("/character-data", authMiddleware, async (req, res, next) => {
  */
 router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
   try {
-    // 요청 받은 강화활 캐릭터 이름
+    // 요청 받은 강화할 캐릭터 이름
     const { name } = req.body;
 
     // 인증 미들웨어에서 받은 유저 아이디
@@ -174,15 +170,13 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
 
     // 유저 아이디 조회
     const account = await prisma.account.findUnique({
-      where: {
-        userId: userId,
-      },
+      where: {userId: userId,},
     });
     if (!account) {
       return res.status(404).json({ message: "존재하지 않는 계정입니다." });
     }
 
-    // 요청 받은 캐릭터 이름으로 cjaracter 테이블에서 조회
+    // 요청 받은 캐릭터 이름으로 Character 테이블에서 조회
     const character = await prisma.character.findUnique({
       where: { name },
     });
@@ -233,7 +227,9 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
 
     // 재료 차감
     await prisma.characterList.update({
-      where: { characterListId: hasCharacter.characterListId },
+      where: {
+        characterListId: hasCharacter.characterListId,
+      },
       data: { quantity: characterQuantity - currentLevel },
     });
 
@@ -241,28 +237,6 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
     const isSuccess = Math.random() <= successEnhance;
 
     if (isSuccess) {
-      const newLevel = currentLevel + 1;
-
-      // 레벨에 따라 스탯 증가 ////////// 민석 변경 사항
-      const statIncrease = {
-        speed: 1,
-        goalDetermination: 1,
-        shootPower: 1,
-        defense: 1,
-        stamina: 1,
-      };
-
-      await prisma.character.update({
-        where: { characterId: character.characterId },
-        data: {
-          speed: { increment: statIncrease.speed },
-          goalDetermination: { increment: statIncrease.goalDetermination },
-          shootPower: { increment: statIncrease.shootPower },
-          defense: { increment: statIncrease.defense },
-          stamina: { increment: statIncrease.stamina },
-        },
-      });
-
       // 강화 성공, 레벨 +1, 천장 수치 0으로 초기화
       await prisma.characterList.update({
         where: {
@@ -286,7 +260,7 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
         data: { level: currentLevel + 1, ceiling: 0 },
       });
 
-      return res.status(200).json({ message: "강화 성공!(100%)" });
+      return res.status(200).json({ message: "강화 성공!" });
     }
 
     return res.status(200).json({
@@ -301,3 +275,4 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
 });
 
 export default router;
+
