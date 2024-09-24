@@ -17,15 +17,10 @@ router.get("/my-cash", authMiddleware, async (req, res, next) => {
   try {
     const userId = req.user.userId;
 
-    // 사용자의 계정을 찾기
+    // 현재 로그인한 유저정보 값 가져오기 
     const account = await prisma.account.findUnique({
-      where: { userId: userId },
-      include: { characters: true }, // 필요에 따라 characters를 포함
+      where: { userId },
     });
-
-    if (!account) {
-      return res.status(404).json({ message: "계정을 찾을 수 없습니다." });
-    }
 
     // 보유 캐시 포맷
     const cash = account.userCash.toLocaleString();
