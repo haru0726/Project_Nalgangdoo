@@ -54,7 +54,7 @@ router.post("/sell", authMiddleware, async (req, res) => {
     }
 
     // 캐릭터 판매 로직
-    const sellingPrice = 1000; // 예시 판매가
+    const sellingPrice = 350; // 예시 판매가
     const newQuantity = characterListEntry.quantity - quantity;
 
     // Account의 cash 업데이트
@@ -80,12 +80,10 @@ router.post("/sell", authMiddleware, async (req, res) => {
       });
     }
 
-    return res
-      .status(200)
-      .json({
-        message: "캐릭터 판매 완료.",
-        data: { characterName, quantity },
-      });
+    return res.status(200).json({
+      message: `${quantity}명의 ${characterName}를 ${sellingPrice * quantity}원에 판매하였습니다.`,
+      data: { characterName, quantity: newQuantity },
+    });
   } catch (err) {
     console.error(err);
     next(err);
