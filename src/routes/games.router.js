@@ -28,7 +28,7 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
         .json({ message: "현재 사용자 ID가 유효하지 않습니다." });
     }
 
-    if (!userId || userId === null) {
+    if (!userId) {
       return res
         .status(400)
         .json({ message: "상대 사용자 ID가 유효하지 않습니다." });
@@ -44,6 +44,10 @@ router.post("/games/:userId", authMiddleware, async (req, res, next) => {
       where: { userId },
       include: { characters: true },
     });
+    //상대 사용자 존재 유무 체크
+    if (!enemyUserCharacters) {
+      res.status(400).json({ message: "존재하지 않는 사용자입니다." });
+    }
     //팀 구성 인원 체크
     currentUserCharacters.characters = currentUserCharacters.characters.filter(
       (character) => character.isFormation === true
