@@ -22,7 +22,7 @@ router.get("/my-cash", authMiddleware, async (req, res, next) => {
       where: { userId },
     });
 
-    // 보유 캐시 포맷
+    // 보유 캐시 확인
     const cash = account.userCash.toLocaleString();
     return res.status(200).json({ message: `보유 캐시 : ${cash}원 입니다.` });
   } catch (err) {
