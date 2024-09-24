@@ -1,11 +1,12 @@
 import express from "express";
 import { prisma } from "../utils/prisma/index.js";
+import authMiddleware from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
 // URL 파라미터로 사용자 ID를 받아 캐릭터 조회
-router.get("/myCharacter/:userId", async (req, res, next) => {
-  const { userId } = req.params;
+router.get("/myCharacter", authMiddleware, async (req, res, next) => {
+  const userId = req.user.userId;
 
   try {
     // 사용자 ID로 Account 조회
