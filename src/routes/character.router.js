@@ -267,6 +267,12 @@ router.patch("/character-enhance", authMiddleware, async (req, res, next) => {
       });
 
       return res.status(200).json({ message: "강화 성공!" });
+    } else if (currentCeiling === 9) {
+      return res.status(200).json({
+        message: "다음 강화는 반드시 성공합니다!",
+        level: currentLevel,
+        ceiling: 10,
+      });
     }
 
     return res.status(200).json({
