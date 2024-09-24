@@ -45,13 +45,19 @@ router.post("/team", authMiddleware, async (req, res, next) => {
 
     // 요청한 캐릭터 이름을 배열로 추출
     const reqCharacterNames = reqcharacters.map((character) => character.name);
-    
+
     // 유저가 보유한 캐릭터만 필터링
-    const ownedCharacterIds = account.characters.map(character => character.characterId); // 보유한 캐릭터 ID 배열
-    const validCharacters = reqcharacters.filter(character => ownedCharacterIds.includes(character.characterId)); // 유효한 캐릭터 필터링
+    const ownedCharacterIds = account.characters.map(
+      (character) => character.characterId
+    ); // 보유한 캐릭터 ID 배열
+    const validCharacters = reqcharacters.filter((character) =>
+      ownedCharacterIds.includes(character.characterId)
+    ); // 유효한 캐릭터 필터링
 
     if (validCharacters.length !== 3) {
-      return res.status(404).json({ message: "보유한 캐릭터 중 3명을 선택해야 합니다." });
+      return res
+        .status(404)
+        .json({ message: "보유한 캐릭터 중 3명을 선택해야 합니다." });
     }
 
     // 모든 캐릭터의 isFormation 값을 false로 설정
@@ -69,14 +75,21 @@ router.post("/team", authMiddleware, async (req, res, next) => {
     await prisma.characterList.updateMany({
       where: {
         accountId: account.accountId,
-        characterId: { in: validCharacters.map(character => character.characterId) },
+        characterId: {
+          in: validCharacters.map((character) => character.characterId),
+        },
       },
       data: {
         isFormation: true,
       },
     });
 
-    return res.status(200).json({ message: "팀원 편성을 완료했습니다." });
+    return res.status(200).json({
+      message: "팀원 편성을 완료했습니다.",
+      member1: reqCharacterNames[1],
+      member2: reqCharacterNames[2],
+      member3: reqCharacterNames[0],
+    });
   } catch (err) {
     console.error(err);
     next(err);
