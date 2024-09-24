@@ -237,11 +237,10 @@
 ---
 
 ## 보유중인 캐릭터 조회 API
-**Endpoint**: `/api/myCharacter/:userId`  
+**Endpoint**: `/api/myCharacter/`  
 **Method**: `GET`  
-**Description**: 사용자가 보유중인 캐릭터들을 조회한다.
-**Path Parameters**:
-- `userId`: (string) 유저 아이디
+**Description**: 토큰을 보유한 사용자가 보유중인 캐릭터들을 조회한다.
+
 
 **Response**:  
 - `200 OK`: 보유 캐릭터 정보
